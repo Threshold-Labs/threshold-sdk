@@ -99,41 +99,73 @@ Most privacy-preserving systems present users with a binary: you either see
 everything (after granting access) or you see nothing. The structural signature
 work makes a third option possible: **you see the shape without the content.**
 
-The Threshold UI layer is built on this principle. A user navigating their
-trust graph sees:
+### Metadata resolution reveals structure
 
-- Nodes that exist at different trust tiers — rendered with varying levels
-  of resolution based on what access they have. An entity you have full
-  access to is fully labeled and navigable. An entity you know exists but
-  haven't been granted detail on appears as a shape — present, typed,
-  structurally positioned, but redacted.
+What looks like a single node at metadata access level carries three signatures
+that reveal its nature without disclosing its content:
 
-- Connections that are visible as relationships even when their content is
-  not — you know a connection exists between two entities, and its structural
-  weight, without seeing what the connection represents.
+- **Temporal signature** — when does it pulse? How regular is its cadence?
+- **Attention signature** — how much of a user's focus does it draw over time?
+- **Complexity signature** — how much compute does it require to produce?
 
-- Trust-gated resolution — as access is granted, the visualization resolves.
-  Fuzzy shapes sharpen. Redacted labels appear. The graph "comes into focus"
-  incrementally as trust relationships deepen.
+A node with high complexity, irregular temporal cadence, and variable attention
+is almost certainly a rich graph operating at low-frequency intervals — not a
+dumb sensor. A node with low complexity and high-frequency regular pulses is
+probably an ambient signal. The metadata alone reveals the structural category
+without revealing what the node actually contains.
 
-- Temporal navigation — the graph is not a snapshot. You can move through
-  time and watch the structure evolve. Attractor analysis surfaces the stable
-  states a graph tends toward, making the trajectory legible, not just the
-  current position.
+This is the foundation of trust-gated resolution: even at the most restricted
+access level, entities are not invisible — they are present, typed, and
+structurally positioned. As trust deepens, they resolve from signatures to shapes,
+from shapes to labeled nodes, from nodes to navigable subgraphs.
 
-- Metaball hierarchies — entities that are structurally similar in the
-  manifold merge and separate as organic shapes. Boundary fuzziness encodes
-  trust and uncertainty. The visual language maps directly to the underlying
-  math: proximity in the UMAP projection becomes proximity in the visualization,
-  with trust level modulating how much detail resolves at each boundary.
+### Multi-axis projection
 
-The result is a UI where you can navigate, reason about, and make decisions
-based on data you do not fully have access to — and where granting or
-receiving access is a visible, spatial, legible act rather than a permission
-checkbox.
+The same entity graph, projected onto three orthogonal planes simultaneously.
+The axes: **Time**, **Attention**, **Complexity/Compute**.
 
-This connects the trust model to the analysis layer to the interface in a
-single coherent surface. We haven't seen it attempted in this way.
+Each plane shows the same nodes reorganized against a different pair of axes.
+The node that appears central in the Attention × Time plane may be peripheral
+in the Complexity × Attention plane. The same data, read from different vantage
+points, reveals different structural relationships. The user can rotate between
+projections — not switching to a different dataset, but reorienting the same
+topology.
+
+The underlying math is constant. The labels and emphasis are perspectival.
+A developer frames the same axes as Projects × Dependencies. A creator frames
+them as Audiences × Topics. The projection is the same; the semantic layer on
+top shifts to match how the user naturally organizes their world. This is the
+Societies / personas angle operating at the interface layer — different
+framings of the same structural space.
+
+### GPU-computed interactive topology
+
+The projection is UMAP-class computation running client-side in WebGL/WebGPU.
+The compute happens where the person is, not where the data is. The data never
+moves; the topology is computed locally from the structural signatures the user
+has access to. This makes the visualization interactive — the manifold responds
+to navigation in real time — without requiring server-side access to vault data.
+
+The metaball rendering for trust boundaries adds to this: entities that are
+structurally similar in the manifold merge as organic shapes. Boundary fuzziness
+encodes trust and uncertainty in the visual language directly. Proximity in the
+UMAP projection becomes proximity in the visualization. Trust level modulates
+how much detail resolves at each boundary.
+
+### What this enables
+
+A user can navigate, reason about, and make decisions based on data they do
+not fully have access to. They can see that something significant exists, roughly
+what kind of thing it is, and how it relates structurally to things they do have
+access to — without the content crossing any trust boundary.
+
+Granting or receiving access is a visible, spatial act in this surface: a node
+resolves, a boundary clarifies, a subgraph unfolds. The trust model is not a
+settings menu. It is the rendering logic of the interface itself.
+
+We haven't seen this attempted in this way — the combination of trust-gated
+metadata resolution, multi-axis structural projection, and GPU-computed
+interactive topology over a temporal knowledge graph.
 
 ---
 
