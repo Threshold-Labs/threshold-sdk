@@ -17,7 +17,7 @@
  *   0.1.0 — initial audit-only mode, --create stubs signal provider
  */
 
-export const AUDITOR_VERSION = '0.1.0'
+export const AUDITOR_VERSION = '0.2.0'
 
 export const THRESHOLD_AUDITOR_PROMPT = `# Threshold Integration Auditor v${AUDITOR_VERSION}
 > https://thresholdlabs.io/api/prompts/audit
