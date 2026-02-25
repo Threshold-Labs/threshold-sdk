@@ -90,6 +90,31 @@ the tokens that produced it.
 Over time: what data can I bring to X in exchange for a service becomes a
 legible, negotiable, revocable relationship rather than a one-way extraction.
 
+## The Certifying Protocol
+
+Threshold is not building a platform that holds your data safely. It is building
+a protocol that certifies what you are allowed to share, with whom, and under
+what conditions — and eventually, one where that certification is enforced by
+mathematics rather than policy.
+
+The near-term roadmap moves the trust model from architectural guarantee
+(Threshold is not in the data path) to mathematical guarantee (Threshold is
+cryptographically incapable of accessing vault data, regardless of intent).
+The trust graph will be implemented in the cryptography, not just the database.
+
+Apps integrating with Threshold today are building on a surface designed with
+this end state in mind. The vault model, the disclosure manifest, the grant
+schema — all of these are shaped by where the protocol is going. Migration will
+be clean.
+
+The business model follows from protocol position. Certificate authorities,
+OAuth providers, PKI roots — they established the certifying role before the
+monetization was obvious. The value is in being the authoritative issuer. What
+gets built on top of that is a design question for later.
+
+See [issue #24](https://github.com/Threshold-Labs/threshold-sdk/issues/24) for
+the public roadmap on cryptographic trust.
+
 ## What This Means for the SDK
 
 **Threshold holds:**
