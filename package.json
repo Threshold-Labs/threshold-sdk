@@ -1,6 +1,6 @@
 {
   "name": "@threshold-labs/integration",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Threshold integration contract, auditor prompt, and integration utilities for external apps",
   "type": "module",
   "main": "./dist/index.js",

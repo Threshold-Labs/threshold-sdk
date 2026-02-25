@@ -11,7 +11,7 @@
  */
 
 export const INTEGRATION_CONTRACT = {
-  version: '0.1.0',
+  version: '0.2.0',
   baseUrl: 'https://thresholdlabs.io',
 
   auth: {
@@ -19,7 +19,7 @@ export const INTEGRATION_CONTRACT = {
       prefix: 'thld_',
       header: 'Authorization',
       format: 'Bearer <token>',
-      note: 'Issued per-app from the Ecosystem dashboard. Identifies the app and its owner.',
+      note: 'Issued per-app from the Ecosystem dashboard at /ecosystem. Identifies the app and its owner. Register at https://thresholdlabs.io/ecosystem.',
     },
     clerkJwt: {
       header: 'Authorization',
@@ -30,8 +30,25 @@ export const INTEGRATION_CONTRACT = {
       prefix: 'thld_ct_',
       header: 'Authorization',
       format: 'Bearer <token>',
-      note: 'Scoped token allowing an app to read a specific user integration (e.g. Spotify).',
+      note: 'Scoped per-user token allowing an app to read a specific integration (e.g. Spotify). Generated via POST /api/integrations/grants/:appId/:source/connect-token — requires the user to be authenticated and have enabled that source for your app.',
     },
+  },
+
+  cors: {
+    allowOrigin: '*',
+    allowMethods: 'GET, POST, PATCH, DELETE, OPTIONS',
+    allowHeaders: 'Authorization, Content-Type, X-App-Token',
+    note: 'All endpoints support CORS. Browser apps can call the API directly — no server-side proxy required.',
+  },
+
+  errors: {
+    401: 'Invalid or expired token. Check that your app token starts with thld_ and has not been revoked.',
+    403: 'Token is valid but not authorized for this operation (e.g. app token does not match the app slug).',
+    404: 'Resource not found. For signal push: source slug is valid but app not found. For signature: slug not registered.',
+    422: 'Malformed payload. Check that the request body is valid JSON and Content-Type is application/json.',
+    429: 'Rate limited. Back off and retry — check Retry-After header if present.',
+    503: 'Threshold temporarily unavailable. Safe to retry with exponential backoff. Do not alert users.',
+    note: 'All errors return JSON: { error: string }. Network failures and CORS errors will not have this shape — handle them separately. Signal push failures should always be silent to the end user.',
   },
 
   patterns: {
@@ -41,30 +58,47 @@ export const INTEGRATION_CONTRACT = {
      * External apps compute a derived signal locally and push it to Threshold.
      * Raw data stays on the app — only the heuristic is transmitted.
      * Auth: app token
+     *
+     * Source registration: the :source slug is self-declared — no registration
+     * step required. Use your app slug (e.g. "project-control", "ai-dj").
+     * Adding a new source to knownSources below is documentation, not enforcement.
+     *
+     * Payload: free-form JSON object. One row per user per source — each push
+     * overwrites the previous value. Batch multiple heuristics in one call.
      */
     signalPush: {
       endpoint: '/api/signals/:source',
       method: 'POST' as const,
       auth: 'appToken' as const,
       description:
-        'Push a derived heuristic signal to Threshold. The source is your app slug (e.g. "project-control"). The body is free-form JSON — the schema is defined by your app.',
+        'Push a derived heuristic signal to Threshold. The source is your app slug. The body is free-form JSON — batch all heuristics for a cycle into one call. One row per user per source; each push overwrites the previous.',
       knownSources: {
         'project-control': {
           description: 'Developer focus and attention data from project-control',
           schema: {
-            activeProject: 'string — current project slug (client work sanitized)',
-            focusScore: 'number 0-100 — computed from switch rate and deep work blocks',
+            activeProject: 'string — current project slug (client work sanitized to "client work")',
+            focusScore: 'number 0–100 — computed from switch rate and deep work blocks',
             driftDetected: 'boolean — true if project changed since last push',
             label: 'string — human-readable label for the signal',
             pushedAt: 'string — ISO 8601 timestamp',
           },
         },
         'ai-dj': {
-          description: 'Music taste signal from AI-DJ',
+          description: 'Attention and music state from FlowDJ — cognitive rhythm mapped to generative audio',
           schema: {
-            mood: 'string — current detected mood',
-            genres: 'string[] — active genre cluster',
-            energyLevel: 'number 0-1',
+            // Attention signals
+            flowScore: 'number 0–100 — typing/voice momentum score with exponential decay',
+            zone: '"idle" | "warming" | "flow" | "peak" — current flow zone',
+            wpm: 'number — words per minute (10s rolling window)',
+            voiceEnergy: 'number 0–1 — mic RMS level, normalized',
+            // Focus signals (present when a project is active)
+            activeProject: 'string | null — project slug (e.g. "sideslip", "dropin")',
+            focusScore: 'number 0–100 | null — on-topic score for active project',
+            focusState: '"on-task" | "focused" | "drifting" | "off-topic" | null',
+            // Music state
+            activeVibe: 'string — current vibe preset (e.g. "focus", "jazz", "dark")',
+            musicParams: '{ energy: number, complexity: number, warmth: number, space: number, bpm: number }',
+            pushedAt: 'string — ISO 8601',
           },
         },
       },
@@ -75,15 +109,17 @@ export const INTEGRATION_CONTRACT = {
     },
 
     /**
-     * Pattern 2: Signal Read (deferred — single consumer today)
+     * Pattern 2: Signal Read (coming soon)
      *
      * Read signals pushed by another app, subject to trust graph permissions.
-     * Not yet implemented. Watch /developers for updates.
+     * Auth: app token (for daemon/CLI consumers) or Clerk JWT.
+     * Trust model: user-scoped — user A grants user B's app access to their signals.
+     * Filing issues at https://github.com/Threshold-Labs/threshold-sdk shapes this spec.
      */
     signalRead: {
-      endpoint: '/api/signals/:source (GET) — coming soon',
-      auth: 'clerkJwt' as const,
-      description: 'Read signals from a source, subject to trust graph permissions. Not yet available.',
+      endpoint: '/api/signals/:source — coming soon',
+      auth: ['appToken', 'clerkJwt'] as const,
+      description: 'Read signals from a source, subject to trust graph permissions. App token auth will be supported for daemon/CLI consumers. Not yet available.',
       status: 'coming-soon' as const,
     },
 
@@ -94,17 +130,21 @@ export const INTEGRATION_CONTRACT = {
      * those signatures to Threshold. Threshold stores history, detects drift,
      * and (with user permission) enables cross-app structural comparison.
      * Auth: app token or Clerk JWT
+     *
+     * viewName: scoped to your app by the route slug — no need to prefix.
+     * Cadence: push on meaningful state change (e.g. graph-discover run), not continuously.
+     * Recommended debounce: skip if last push was <60s ago.
      */
     graphSignature: {
       endpoint: '/api/apps/:slug/signature',
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description:
-        'Sync a structural signature computed by @threshold-labs/core. The slug must match an app registered in your Threshold dashboard.',
+        'Sync a structural signature computed by @threshold-labs/core. The slug must match an app registered in your Threshold dashboard. viewName is scoped to your app — no prefix needed.',
       package: '@threshold-labs/core',
       provenance: ['connected', 'anonymous', 'projection'] as const,
       body: {
-        viewName: 'string — identifies the graph view (e.g. "main", "filtered")',
+        viewName: 'string — identifies the graph view (e.g. "current", "target", "filtered")',
         signature: 'StructuralSignature — output of computeSignature() from @threshold-labs/core',
       },
       response: {
@@ -124,7 +164,7 @@ export const INTEGRATION_CONTRACT = {
     },
     'signals:read': {
       description: 'Read signals from other apps (subject to trust graph) — coming soon',
-      grantedBy: 'Clerk JWT with trust edge',
+      grantedBy: 'app token or Clerk JWT with trust edge',
       status: 'coming-soon',
     },
   },
