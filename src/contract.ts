@@ -11,7 +11,7 @@
  */
 
 export const INTEGRATION_CONTRACT = {
-  version: '0.3.0',
+  version: '0.4.0',
   baseUrl: 'https://thresholdlabs.io',
 
   auth: {
@@ -154,18 +154,38 @@ export const INTEGRATION_CONTRACT = {
      */
     graphSignature: {
       endpoint: '/api/apps/:slug/signature',
-      method: 'POST' as const,
+      methods: ['GET', 'POST'] as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description:
         'Sync a structural signature computed by @threshold-labs/core. The slug must match an app registered in your Threshold dashboard. viewName is scoped to your app — no prefix needed.',
       package: '@threshold-labs/core',
       provenance: ['connected', 'anonymous', 'projection'] as const,
-      body: {
-        viewName: 'string — identifies the graph view (e.g. "current", "target", "filtered")',
-        signature: 'StructuralSignature — output of computeSignature() from @threshold-labs/core',
+      push: {
+        body: {
+          viewName: 'string — identifies the graph view (e.g. "current", "target", "filtered")',
+          signature: 'StructuralSignature — output of computeSignature() from @threshold-labs/core',
+        },
+        response: { ok: 'boolean' },
       },
-      response: {
-        ok: 'boolean',
+      read: {
+        response: {
+          slug: 'string',
+          views: 'Array<{ viewName, signature: StructuralSignature, lastSync: string }>',
+        },
+        note: 'Self-read (token owner == app owner) always allowed. Cross-app reads require an app_data_grant — see issue #20.',
+      },
+      history: {
+        endpoint: '/api/apps/:slug/signature/history',
+        queryParams: {
+          viewName: 'string — which view to retrieve (default: "main")',
+          limit: 'number — max snapshots to return (default: 50, max: 200)',
+        },
+        response: {
+          slug: 'string',
+          viewName: 'string',
+          history: 'Array<{ signature: StructuralSignature, computedAt: string }>',
+        },
+        note: 'Ordered newest-first. Use for drift visualization.',
       },
     },
   },
