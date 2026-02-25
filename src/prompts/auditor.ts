@@ -17,7 +17,7 @@
  *   0.1.0 — initial audit-only mode, --create stubs signal provider
  */
 
-export const AUDITOR_VERSION = '0.2.0'
+export const AUDITOR_VERSION = '0.3.0'
 
 export const THRESHOLD_AUDITOR_PROMPT = `# Threshold Integration Auditor v${AUDITOR_VERSION}
 > https://thresholdlabs.io/api/prompts/audit
@@ -40,6 +40,13 @@ POST https://thresholdlabs.io/api/signals/:source
 Auth: app token (thld_...)
 Push a derived heuristic after each compute cycle. One row per user per source;
 subsequent pushes overwrite. The source slug is your app's identifier.
+
+**Pattern 2: Signal Read**
+GET https://thresholdlabs.io/api/signals/:source
+Auth: app token (reads for token owner) or Clerk JWT (reads for logged-in user)
+Read the latest signal for a user from any source. App token auth works for
+CLI/daemon consumers — no browser required. Cross-user reads (trust graph)
+are the next iteration.
 
 **Pattern 3: Graph Embedding Telemetry**
 POST https://thresholdlabs.io/api/apps/:slug/signature

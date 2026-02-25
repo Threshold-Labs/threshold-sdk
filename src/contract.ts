@@ -11,7 +11,7 @@
  */
 
 export const INTEGRATION_CONTRACT = {
-  version: '0.2.0',
+  version: '0.3.0',
   baseUrl: 'https://thresholdlabs.io',
 
   auth: {
@@ -109,18 +109,35 @@ export const INTEGRATION_CONTRACT = {
     },
 
     /**
-     * Pattern 2: Signal Read (coming soon)
+     * Pattern 2: Signal Read
      *
-     * Read signals pushed by another app, subject to trust graph permissions.
-     * Auth: app token (for daemon/CLI consumers) or Clerk JWT.
-     * Trust model: user-scoped — user A grants user B's app access to their signals.
-     * Filing issues at https://github.com/Threshold-Labs/threshold-sdk shapes this spec.
+     * Read the latest signal for the authenticated user from any source.
+     * Auth: app token (token owner = the user) or Clerk JWT.
+     *
+     * Trust scope (v0.3): user-scoped self-read only.
+     * You can read any signal pushed for your own user — regardless of which app pushed it.
+     * Cross-user reads (user A reads user B's signals) require explicit user grants.
+     * That trust layer is the next iteration — file issues to shape it.
+     *
+     * Common use cases today:
+     * - App reads its own previously pushed signals (self-read, app token)
+     * - Dashboard reads any signal for the logged-in user (Clerk JWT)
+     * - CLI/daemon reads signals without a browser auth flow (app token)
      */
     signalRead: {
-      endpoint: '/api/signals/:source — coming soon',
+      endpoint: '/api/signals/:source',
+      method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
-      description: 'Read signals from a source, subject to trust graph permissions. App token auth will be supported for daemon/CLI consumers. Not yet available.',
-      status: 'coming-soon' as const,
+      description: 'Read the latest signal for the authenticated user. App token returns the signal for the token owner. Clerk JWT returns the signal for the logged-in user. Cross-user reads (trust graph) coming in the next iteration.',
+      response: {
+        source: 'string — the source slug',
+        signal: 'object — the signal data as originally pushed',
+        pushedAt: 'string — ISO 8601 timestamp of the last push',
+      },
+      crossUserReads: {
+        status: 'coming-soon' as const,
+        note: 'User A reading user B\'s signals requires explicit grants between users. File issues at https://github.com/Threshold-Labs/threshold-sdk to shape this.',
+      },
     },
 
     /**
@@ -163,9 +180,8 @@ export const INTEGRATION_CONTRACT = {
       grantedBy: 'app token or Clerk JWT',
     },
     'signals:read': {
-      description: 'Read signals from other apps (subject to trust graph) — coming soon',
-      grantedBy: 'app token or Clerk JWT with trust edge',
-      status: 'coming-soon',
+      description: 'Read signals for the authenticated user from any source via GET /api/signals/:source',
+      grantedBy: 'app token (reads for token owner) or Clerk JWT (reads for logged-in user)',
     },
   },
 } as const
