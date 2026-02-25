@@ -1,0 +1,50 @@
+{
+  "name": "@threshold-labs/integration",
+  "version": "0.1.0",
+  "description": "Threshold integration contract, auditor prompt, and integration utilities for external apps",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./contract": {
+      "types": "./dist/contract.d.ts",
+      "import": "./dist/contract.js"
+    },
+    "./prompts": {
+      "types": "./dist/prompts/index.d.ts",
+      "import": "./dist/prompts/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "!dist/**/__tests__"
+  ],
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "threshold",
+    "integration",
+    "trust-graph",
+    "signal-push",
+    "graph-embedding"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Threshold-Labs/threshold-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
