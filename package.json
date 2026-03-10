@@ -1,7 +1,7 @@
 {
   "name": "@threshold-labs/integration",
-  "version": "0.5.0",
-  "description": "Threshold integration contract, auditor prompt, and integration utilities for external apps",
+  "version": "0.8.0",
+  "description": "Threshold capability contract, auditor prompt, and integration utilities for external apps",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -22,6 +22,14 @@
     "./vault": {
       "types": "./dist/vault.d.ts",
       "import": "./dist/vault.js"
+    },
+    "./capability": {
+      "types": "./dist/capability.d.ts",
+      "import": "./dist/capability.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js"
     }
   },
   "scripts": {
