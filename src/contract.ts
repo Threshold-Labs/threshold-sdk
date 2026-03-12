@@ -170,6 +170,35 @@ export interface Correction {
 }
 
 /**
+ * Identity claim — a user asserts that an informal identity (parsed name,
+ * phone number, handle) does or does not belong to them.
+ *
+ * Apps that ingest data with informal identities (chat exports, CSVs, etc.)
+ * use this to bridge those identities to authenticated Threshold users.
+ * Portable: once confirmed, any Threshold app parsing the same source can
+ * benefit (with the user's permission).
+ *
+ * Append-only — claims and denials are both stored as trust actions.
+ *
+ * RFC #46
+ */
+export interface IdentityClaim {
+  /** The informal identity being claimed or denied */
+  informalId: {
+    type: 'name' | 'phone' | 'handle'
+    value: string
+  }
+  /** Whether the user is confirming or denying this identity */
+  claimType: 'confirm' | 'deny'
+  /** Origin of the informal identity (e.g. 'whatsapp-export', 'slack-export') */
+  source: string
+  /** Threshold user ID of the claimant */
+  claimantId: string
+  /** ISO 8601 timestamp */
+  claimedAt: string
+}
+
+/**
  * Resolved capability — returned by resolveCapability().
  * Contains everything an app needs to communicate with a capability at runtime.
  */
