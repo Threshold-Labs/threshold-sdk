@@ -225,6 +225,49 @@ export interface DataCredentialPayload {
   expiresAt: Date
 }
 
+// ── Sideslip Routing Types (RFC #35) ─────────────────────────────────────────
+
+/**
+ * Routing outcome — records how a model performed on a specific node.
+ * Maps sideslip's routing_outcomes table to the capability vocabulary.
+ * Each model-on-node invocation produces one outcome record.
+ *
+ * RFC #35: sideslip feedback — routing trust as a native capability system
+ */
+export interface RoutingOutcome {
+  /** Node identifier within the federation */
+  node_id: string
+  /** Model that handled the request (e.g. 'llama3.2', 'nemotron') */
+  model: string
+  /** Curvature score — measures output novelty/quality (higher = more novel) */
+  curvature: number
+  /** Whether the routing produced a successful result */
+  success: boolean
+  /** Execution duration in seconds */
+  duration: number
+}
+
+/**
+ * Saturation signal — detects when a model/substrate/domain combination
+ * has stopped producing useful outputs. Substrate-relative trust degradation.
+ *
+ * When is_saturated is true, the model on this substrate in this domain
+ * is no longer trustworthy for novel outputs — triggers model rotation
+ * and new topic seeds internally, and can inform external routing decisions.
+ *
+ * RFC #35: sideslip feedback — routing trust as a native capability system
+ */
+export interface SaturationSignal {
+  /** Average embedding similarity of recent outputs (saturation threshold: > 0.78) */
+  avg_similarity: number
+  /** Trend of curvature scores over recent window (declining < -0.01 indicates saturation) */
+  curvature_trend: number
+  /** Knowledge domain being evaluated (e.g. 'distributed-systems', 'classification') */
+  domain: string
+  /** Whether this model/substrate/domain combination is saturated */
+  is_saturated: boolean
+}
+
 // ── Capability Contract ──────────────────────────────────────────────────────
 
 export const CAPABILITY_CONTRACT = {

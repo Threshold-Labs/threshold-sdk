@@ -21,6 +21,9 @@ export type {
   // RFC types (typed, not yet implemented)
   AttributionClaim,
   Correction,
+  // Sideslip routing types (RFC #35)
+  RoutingOutcome,
+  SaturationSignal,
   // Deprecated aliases
   IntegrationPattern,
   IntegrationTokenScope,
