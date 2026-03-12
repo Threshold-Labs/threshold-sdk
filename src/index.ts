@@ -18,6 +18,8 @@ export type {
   ResolvedCapability,
   DataAccessResult,
   DataCredentialPayload,
+  // Demand-side capability signal
+  CapabilityRequest,
   // RFC types (typed, not yet implemented)
   AttributionClaim,
   Correction,

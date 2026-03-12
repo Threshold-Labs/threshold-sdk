@@ -124,6 +124,46 @@ export interface GrantDeclaration {
   expiresAt?: string | null     // ISO 8601 or null for non-expiring
 }
 
+// ── Capability Requests ─────────────────────────────────────────────────────
+
+/**
+ * Capability request — demand-side signal for the capability model.
+ * Expresses a typed need for a capability, with trust metadata on the request itself.
+ *
+ * Trust flows in both directions:
+ * - Requester trusts that the fulfiller will deliver at the declared trust level
+ * - Fulfiller trusts that the need is real and worth serving
+ * - Fulfillment quality feeds back as attribution/correction data
+ *
+ * RFC #47
+ */
+export interface CapabilityRequest {
+  /** Unique request ID */
+  id: string
+  /** Who is requesting — user ID, app slug, or agent ID */
+  requesterId: string
+  /** What type of entity is requesting */
+  requesterType: 'user' | 'app' | 'agent'
+  /** Human-readable description of the needed capability */
+  description: string
+  /** What type of capability is being requested */
+  capabilityType?: CapabilityType
+  /** Trust level the requester is willing to operate at */
+  trustLevelOffered: TrustLevel
+  /** Why the requester needs this capability */
+  purpose: string
+  /** Specific capability ID being requested, if targeting an existing capability */
+  targetCapabilityId?: string
+  /** Who the requester wants to fulfill the request, if known */
+  targetFulfillerId?: string
+  /** Current status of the request */
+  status: 'open' | 'matched' | 'fulfilled' | 'withdrawn'
+  /** ISO 8601 timestamp of when the request was created */
+  createdAt: string
+  /** ISO 8601 expiry, or null for non-expiring */
+  expiresAt?: string | null
+}
+
 // ── Trust Records ────────────────────────────────────────────────────────────
 
 /**
