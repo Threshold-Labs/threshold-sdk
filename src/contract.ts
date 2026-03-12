@@ -170,6 +170,49 @@ export interface Correction {
 }
 
 /**
+ * Deformation signal — a correction that targets a specific stage
+ * in a composed capability pipeline.
+ *
+ * When a user says "these ideas are wrong," the correction could target
+ * any stage in the pipeline. DeformationSignal lets users express which
+ * stage to adjust and how.
+ *
+ * RFC #39
+ */
+export interface DeformationSignal {
+  /** Which stage (child capability ID) to deform */
+  targetCapability: string
+  /** The dimension being adjusted, e.g. 'topic-work', 'recency-bias' */
+  dimension: string
+  /** Direction of the deformation */
+  direction: 'amplify' | 'suppress' | 'reweight'
+  /** Magnitude of the deformation (0–1 scale) */
+  magnitude: number
+  /** Optional user explanation of why this correction is needed */
+  context?: string
+}
+
+/**
+ * Composed trust profile — per-child trust assessments for a composed capability.
+ *
+ * Extends the composition model (`composedOf` on CapabilityDeclaration) so that
+ * each child stage can carry its own trust level, adherence score, and accumulated
+ * deformation signals.
+ *
+ * RFC #39
+ */
+export interface ComposedTrustProfile {
+  /** The parent composed capability ID */
+  capabilityId: string
+  /** Per-child trust data, keyed by child capability ID */
+  childTrust: Record<string, {
+    trustLevel: TrustLevel
+    adherenceScore?: number
+    deformations?: DeformationSignal[]
+  }>
+}
+
+/**
  * Resolved capability — returned by resolveCapability().
  * Contains everything an app needs to communicate with a capability at runtime.
  */
