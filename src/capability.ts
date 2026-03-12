@@ -158,6 +158,59 @@ export async function requestDataAccess(
   return res.json() as Promise<DataAccessResult>
 }
 
+export interface ReadCapabilityDataOptions {
+  /** Grant token (thld_cg_) or app token (thld_) */
+  token: string
+  /** Filter the returned dataset (if supported by the capability) */
+  filter?: { tags?: string[]; entityIds?: string[] }
+  /** Override base URL (default: https://thresholdlabs.io) */
+  baseUrl?: string
+}
+
+/**
+ * Read data from a capability in a single call.
+ *
+ * Combines requestDataAccess() (get credential) with a fetch to the capability
+ * endpoint. The credential encodes the trust level, so the capability filters
+ * its response accordingly.
+ *
+ * @example
+ * ```ts
+ * import type { Dataset } from '@threshold-labs/core'
+ * const data = await readCapabilityData<Dataset>('cap-uuid', { token: grantToken })
+ * ```
+ */
+export async function readCapabilityData<T = unknown>(
+  capabilityId: string,
+  options: ReadCapabilityDataOptions
+): Promise<T> {
+  const access = await requestDataAccess(capabilityId, {
+    token: options.token,
+    baseUrl: options.baseUrl,
+  })
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${access.credential}`,
+  }
+
+  const url = new URL(access.endpoint)
+  if (options.filter?.tags) {
+    url.searchParams.set('tags', options.filter.tags.join(','))
+  }
+  if (options.filter?.entityIds) {
+    url.searchParams.set('entityIds', options.filter.entityIds.join(','))
+  }
+
+  const res = await fetch(url.toString(), { headers })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText })) as { error: string }
+    throw new Error(`readCapabilityData failed: ${err.error}`)
+  }
+
+  return res.json() as Promise<T>
+}
+
 export interface ComposeCapabilitiesOptions {
   /** Clerk JWT */
   token: string
