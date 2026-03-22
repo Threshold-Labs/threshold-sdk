@@ -5,6 +5,7 @@ export type {
   TrustLevel,
   MinimumTrust,
   CapabilityReliability,
+  CapabilityAvailability,
   CapabilityStatus,
   CapabilityPattern,
   CapabilityTokenScope,
@@ -27,3 +28,13 @@ export type {
 } from './contract.js'
 export type { AuthTier } from './contract.js'
 export { THRESHOLD_AUDITOR_PROMPT, AUDITOR_VERSION } from './prompts/auditor.js'
+export {
+  pushSignal,
+  readSignal,
+} from './signals.js'
+export type {
+  PushSignalOptions,
+  PushSignalResult,
+  ReadSignalOptions,
+  SignalResponse,
+} from './signals.js'

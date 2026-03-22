@@ -5,6 +5,9 @@
  * Import this in docs, the /developers page, and any tooling that validates
  * integration payloads.
  *
+ * v0.9.0: Signal helpers (pushSignal, readSignal), heartbeat/availability,
+ * app token auth for capability CRUD.
+ *
  * v0.7.0: Capabilities replace integrations as the primary trust entity.
  * Everything is a capability — connectors, signals, vaults, derivations.
  * Users own capabilities. Apps compose them. Trust is per-capability.
@@ -169,6 +172,9 @@ export interface Correction {
   correctedAt: string
 }
 
+/** Capability availability — derived from heartbeat data */
+export type CapabilityAvailability = 'live' | 'stale' | 'unknown'
+
 /**
  * Resolved capability — returned by resolveCapability().
  * Contains everything an app needs to communicate with a capability at runtime.
@@ -182,6 +188,10 @@ export interface ResolvedCapability {
   status: CapabilityStatus
   /** Reliability indicator */
   reliability: CapabilityReliability
+  /** Availability derived from heartbeat: live (recent), stale (overdue), unknown (no heartbeat) */
+  availability: CapabilityAvailability
+  /** ISO 8601 timestamp of last heartbeat, or null if never seen */
+  lastSeen: string | null
   /** Full behavioral contract (if registered) */
   declaration: CapabilityDeclaration | null
 }
@@ -228,7 +238,7 @@ export interface DataCredentialPayload {
 // ── Capability Contract ──────────────────────────────────────────────────────
 
 export const CAPABILITY_CONTRACT = {
-  version: '0.8.0',
+  version: '0.9.0',
   baseUrl: 'https://thresholdlabs.io',
 
   auth: {
@@ -413,7 +423,7 @@ export const CAPABILITY_CONTRACT = {
     create: {
       endpoint: '/api/capabilities',
       method: 'POST' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Declare a capability owned by the authenticated user. For connector types (e.g. Spotify), this is called after the OAuth flow completes.',
       body: {
         capabilityId: 'string — slug unique to the user, e.g. "spotify-connector"',
@@ -430,28 +440,28 @@ export const CAPABILITY_CONTRACT = {
     list: {
       endpoint: '/api/capabilities',
       method: 'GET' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'List all capabilities owned by the authenticated user.',
       response: 'Array<Capability>',
     },
     get: {
       endpoint: '/api/capabilities/:id',
       method: 'GET' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Get details for a specific capability.',
       response: 'Capability',
     },
     update: {
       endpoint: '/api/capabilities/:id',
       method: 'PATCH' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Update a capability. Only the owner can update.',
       body: 'Partial<Capability> — any mutable fields',
     },
     revoke: {
       endpoint: '/api/capabilities/:id',
       method: 'DELETE' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Revoke a capability. Sets status to "revoked". All active grants are invalidated.',
     },
   },
@@ -461,7 +471,7 @@ export const CAPABILITY_CONTRACT = {
     create: {
       endpoint: '/api/capabilities/:id/grants',
       method: 'POST' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Grant access to a capability. The authenticated user must own the capability.',
       body: {
         granteeType: '"user" | "app" | "scope"',
@@ -474,14 +484,14 @@ export const CAPABILITY_CONTRACT = {
     list: {
       endpoint: '/api/capabilities/:id/grants',
       method: 'GET' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'List active grants on a capability. Owner only.',
       response: 'Array<{ id, granteeType, granteeId, trustLevel, createdAt, expiresAt, lastUsedAt }>',
     },
     revoke: {
       endpoint: '/api/capabilities/:id/grants/:grantId',
       method: 'DELETE' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Revoke a specific grant.',
     },
   },
@@ -498,7 +508,7 @@ export const CAPABILITY_CONTRACT = {
     add: {
       endpoint: '/api/apps/:slug/capabilities',
       method: 'POST' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Add a capability requirement to an app. App owner only.',
       body: {
         capabilityId: 'string — ID of the capability to compose',
@@ -509,7 +519,7 @@ export const CAPABILITY_CONTRACT = {
     remove: {
       endpoint: '/api/apps/:slug/capabilities/:capId',
       method: 'DELETE' as const,
-      auth: 'clerkJwt' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
       description: 'Remove a capability from an app composition.',
     },
   },
@@ -526,8 +536,30 @@ export const CAPABILITY_CONTRACT = {
         trustLevel: '"metadata-only" | "redacted" | "partial" | "full" | "subgraph" — effective trust level for the caller',
         status: '"active" | "paused" | "revoked"',
         reliability: '"healthy" | "degraded" | "blocked"',
+        availability: '"live" | "stale" | "unknown" — derived from heartbeat data',
+        lastSeen: 'string | null — ISO 8601 timestamp of last heartbeat',
         declaration: 'CapabilityDeclaration | null — full behavioral contract',
       },
+    },
+  },
+
+  // ── Capability Heartbeat (#60) ────────────────────────────────────────
+  capabilityHeartbeat: {
+    heartbeat: {
+      endpoint: '/api/capabilities/:id/heartbeat',
+      method: 'POST' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
+      description: 'Report capability liveness. Call on a declared interval. Threshold derives availability from heartbeat recency. Provider must own the capability.',
+      body: {
+        intervalMs: 'number? — declared heartbeat interval in ms (used to compute staleness threshold: 3x interval)',
+        metadata: 'object? — provider-defined: version, load, model, etc.',
+      },
+      response: {
+        ok: 'boolean',
+        capabilityId: 'string',
+        lastSeen: 'string — ISO 8601',
+      },
+      note: 'Staleness = 3x declared interval, or 10 minutes if no interval declared. Availability surfaces in resolveCapability() response.',
     },
   },
 

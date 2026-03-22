@@ -158,8 +158,70 @@ export async function requestDataAccess(
   return res.json() as Promise<DataAccessResult>
 }
 
+export interface HeartbeatOptions {
+  /** App token or Clerk JWT — must own the capability */
+  token: string
+  /** Override base URL */
+  baseUrl?: string
+  /** Declared heartbeat interval in ms (used by Threshold to compute staleness: 3x this value) */
+  intervalMs?: number
+  /** Provider-defined metadata: version, load, model name, etc. */
+  metadata?: Record<string, unknown>
+}
+
+export interface HeartbeatResult {
+  ok: boolean
+  capabilityId: string
+  lastSeen: string
+}
+
+/**
+ * Report capability liveness to Threshold.
+ *
+ * Call this on a regular interval (e.g. every 60s) from your capability provider.
+ * Threshold derives availability from heartbeat recency and surfaces it
+ * in resolveCapability() responses.
+ *
+ * @example
+ * ```ts
+ * // On startup and every 60s
+ * setInterval(() => {
+ *   heartbeat('my-capability-id', {
+ *     token: appToken,
+ *     intervalMs: 60_000,
+ *     metadata: { version: '1.2.0', model: 'qwen2.5-7b' }
+ *   })
+ * }, 60_000)
+ * ```
+ */
+export async function heartbeat(
+  capabilityId: string,
+  options: HeartbeatOptions
+): Promise<HeartbeatResult> {
+  const baseUrl = options.baseUrl || CAPABILITY_CONTRACT.baseUrl
+  const body: Record<string, unknown> = {}
+  if (options.intervalMs != null) body.intervalMs = options.intervalMs
+  if (options.metadata) body.metadata = options.metadata
+
+  const res = await fetch(`${baseUrl}/api/capabilities/${capabilityId}/heartbeat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${options.token}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText })) as { error: string }
+    throw new Error(`heartbeat failed: ${err.error}`)
+  }
+
+  return res.json() as Promise<HeartbeatResult>
+}
+
 export interface ComposeCapabilitiesOptions {
-  /** Clerk JWT */
+  /** Clerk JWT or app token */
   token: string
   /** Override base URL */
   baseUrl?: string
