@@ -115,6 +115,81 @@ gets built on top of that is a design question for later.
 See [issue #24](https://github.com/Threshold-Labs/threshold-sdk/issues/24) for
 the public roadmap on cryptographic trust.
 
+## Anomaly-Driven Annotation
+
+The question "how is X related to Y?" is the wrong question. That produces
+taxonomy, not signal. Threshold does not ask users to label relationships.
+
+The right question is: **what just happened that the system didn't predict?**
+
+The system has structural signatures, heartbeats, composition graphs, trust
+levels. It can project what should happen next. When something happens that
+doesn't fit — a capability fires outside its cadence, two apps with no shared
+compositions suddenly converge structurally, a user grants access to something
+they've never engaged with — that's an anomaly the system can't account for.
+
+The interaction model:
+
+1. **System projects** based on what it knows (signatures, compositions,
+   cadence, trust)
+2. **System surfaces anomalies** — events it can't explain from its current
+   projection
+3. **User annotates the anomaly** — not "what is this" but "what happened
+   that I know and you don't"
+4. **System binds a control** — creates a new dimension/axis from the
+   annotation
+5. **Landscape reshapes** — other entities reposition based on the new axis
+6. **User adjusts the control** — "more of this, less of that" in the new
+   dimension
+
+Example: the system detects that your community-digest capability and someone
+else's reading-history capability just converged structurally, but you have no
+trust edge connecting you. Instead of "how are these related?" it asks: "Did
+something happen?" The user says "we met at an event." The system now has a
+new dimension — event-encounter — that reshapes the entire landscape. Other
+entities that share that dimension shift position. The user didn't label a
+pair — they **introduced a new axis** that everything orients around.
+
+The annotation is multiplicative, not additive.
+
+Labels emerge from accumulated annotations. If 20 users annotate anomalies
+that all point to "we met at events," the system names that axis
+"event-encounter" and starts predicting it. Markets form around named axes
+that have enough signal — not because we asked people to name markets, but
+because the anomalies clustered.
+
+This is what "gesticulative superpowers" means in practice. The user's
+annotation doesn't describe a static relationship. It dynamically binds a
+control surface to a part of the landscape that was previously dark. The
+system couldn't see event-encounters before. Now it can, and it applies that
+lens everywhere, not just to the pair that triggered the annotation.
+
+## The Custody Gradient
+
+The original vision assumed users show up first, then generate data. Reality
+is the opposite — data about you exists before you do.
+
+vibeswith indexes your WhatsApp community. ideas parses your comms. An event
+indexer scrapes your conference attendance. All of this data exists about
+people who have never heard of Threshold.
+
+The custody lifecycle makes the trust model honest:
+
+- **Custodial** (zero trust): the app holds data about you. You don't know,
+  you haven't consented. The app declares "I hold data about identity X" —
+  making custody explicit rather than pretending it doesn't exist.
+- **Claimable** (low trust): you claim your identity. You know the data
+  exists. The app knows you know. You're evaluating.
+- **Transferring**: you create a Threshold account. Data migrates from app
+  custody to your vault.
+- **Sovereign** (earned trust): you own the data. The app retains access
+  only via standard capability grants at a declared trust level.
+
+Trust is a gradient, not a binary. The SDK models the full journey, not just
+the end state. Most "privacy-first" platforms skip the custodial phase
+entirely, which means they can only serve users who already trust them —
+a chicken-and-egg problem that kills adoption.
+
 ## What This Means for the SDK
 
 **Threshold holds:**
@@ -122,20 +197,30 @@ the public roadmap on cryptographic trust.
 - Structural signatures (content-free fingerprints from `@threshold-labs/core`)
 - Vault endpoint registry (where to find an app's data)
 - Capability declarations (what an app can share — not the data itself)
+- Custody records (who holds data about whom, and the terms of transfer)
+- Heartbeat/availability state (which capabilities are live right now)
 
 **Threshold does not hold:**
-- Raw signals
-- Edge lists
-- Content of any kind
+- Raw signals (apps push derived heuristics, not source data)
+- Edge lists or graph content
+- Vault data of any kind
 
-**The vault pattern** (Pattern 4, in development) enables app-to-app data
-exchange brokered by Threshold without Threshold ever seeing the payload.
-See [issue #21](https://github.com/Threshold-Labs/threshold-sdk/issues/21).
+**The capability model** (v0.8.0+) replaces the integration model. Everything
+is a capability — connectors, signals, vaults, derivations, presentations.
+Users own capabilities. Apps compose them. Trust is per-capability.
 
-**Patterns 1–3** cover the content-free layer:
-- Push structural signatures (content-free by design)
-- Push derived heuristics (pre-computed, non-reconstructable signals)
-- Read those signatures and heuristics back via the trust graph
+**The custody model** (v0.9.1) extends ownership to pre-claim data. Apps
+declare custody. Users claim. Data transfers. The app downgrades from holder
+to consumer.
 
-The structural signature is the right abstraction boundary. Everything richer
-than a signature belongs in the vault.
+**Patterns 1–6** cover the full lifecycle:
+- Push/read derived signals (Pattern 1/2)
+- Sync structural signatures (Pattern 3)
+- Vault credential exchange (Pattern 4)
+- Shared contexts / scopes (Pattern 5)
+- Capability resolution + trust-scoped data access (Pattern 6)
+
+The structural signature remains the right abstraction boundary for what
+Threshold holds. Everything richer belongs in the vault. But the operational
+layer — heartbeats, custody, availability — is what makes the vault model
+work in practice.
