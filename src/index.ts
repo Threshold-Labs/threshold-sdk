@@ -19,6 +19,12 @@ export type {
   ResolvedCapability,
   DataAccessResult,
   DataCredentialPayload,
+  // Custody lifecycle (#61)
+  CustodyPhase,
+  CustodyIdentityType,
+  CustodyTerms,
+  CustodyRecord,
+  CustodyClaim,
   // RFC types (typed, not yet implemented)
   AttributionClaim,
   Correction,

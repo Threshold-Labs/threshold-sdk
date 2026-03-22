@@ -52,6 +52,9 @@ export interface CapabilityDeclaration {
   // Ownership — who provides this capability
   ownerType?: 'user' | 'app'          // user-owned (e.g. "my Spotify") or app-provided (e.g. Threshold derivation)
 
+  // Custody — for app-held data about not-yet-claimed users (#61)
+  custody?: CustodyTerms
+
   // Composition — capabilities can be composed
   composedOf?: string[]                // child capability IDs this depends on
   requiredCapabilities?: string[]      // capabilities that must exist before this one works
@@ -84,6 +87,106 @@ export interface CapabilityDeclaration {
     note?: string                      // 'new/seasonal items only, no promotions'
     reason?: string                    // for coverage:none — 'external-block' | 'auth-expired' | 'deprecated'
   }>
+}
+
+// ── Custody Types (#61) ─────────────────────────────────────────────────────
+
+/**
+ * Custody phase — the lifecycle of app-held user data.
+ *
+ * custodial:    App holds data about an identified-but-unclaimed entity.
+ *               The app is the data steward. No Threshold account exists.
+ * claimable:    Entity has been matched to a verifiable identity (phone, email).
+ *               A Threshold user can claim this data by proving the same identity.
+ * transferring: Claim initiated. Data migrating from app vault to user vault.
+ *               App access is being downgraded per custody terms.
+ * sovereign:    Transfer complete. User owns the data in their vault.
+ *               App retains access only via standard requestDataAccess() grants.
+ */
+export type CustodyPhase = 'custodial' | 'claimable' | 'transferring' | 'sovereign'
+
+/**
+ * Identity type for custody — how the entity is identified before they have
+ * a Threshold account. Apps choose the identity type that matches their
+ * verification method.
+ */
+export type CustodyIdentityType = 'phone' | 'email' | 'handle' | 'name' | 'opaque'
+
+/**
+ * Custody terms — declared by the app when it holds data on behalf of
+ * a not-yet-claimed user. Governs what happens when the user claims.
+ *
+ * This is the honest contract between app and future user:
+ * - What the app holds
+ * - What happens when the user shows up
+ * - What the app retains after transfer
+ *
+ * RFC #61 (vibeswith)
+ */
+export interface CustodyTerms {
+  /** How the custodied entity is identified */
+  identityType: CustodyIdentityType
+  /** The identity value (phone number, email, handle, etc.) */
+  identityValue: string
+  /** Whether data auto-transfers when the user creates a Threshold account and verifies this identity */
+  transferOnClaim: boolean
+  /** Whether the app retains read access after transfer (as a consumer, not a holder) */
+  retainAsConsumer: boolean
+  /** What trust level the app retains after transfer. Only meaningful if retainAsConsumer is true. */
+  retainTrustLevel?: MinimumTrust
+}
+
+/**
+ * Custody record — tracks the state of a specific custodied dataset.
+ * Stored server-side. Apps query their custody records to know what they hold
+ * and what's been claimed.
+ */
+export interface CustodyRecord {
+  /** Unique ID for this custody record */
+  id: string
+  /** The app holding the data */
+  appId: string
+  /** The capability this custody is associated with */
+  capabilityId: string
+  /** Current phase in the custody lifecycle */
+  phase: CustodyPhase
+  /** Identity of the custodied entity */
+  identityType: CustodyIdentityType
+  identityValue: string
+  /** The custody terms declared at creation */
+  terms: CustodyTerms
+  /** Threshold user ID — populated when identity is claimed */
+  claimedBy?: string
+  /** ISO 8601 timestamps */
+  createdAt: string
+  claimedAt?: string
+  transferredAt?: string
+}
+
+/**
+ * Custody claim — a user asserts ownership of custodied data.
+ *
+ * The claim flow:
+ * 1. User verifies identity with the app (phone OTP, email link, etc.)
+ * 2. App calls POST /api/custody/claim with the verified identity
+ * 3. Threshold matches the identity against custody records
+ * 4. If transferOnClaim is true, data migration begins automatically
+ * 5. App's access downgrades from "holder" to "consumer" per terms
+ *
+ * The identity verification happens app-side — Threshold trusts the app's
+ * assertion that the identity was verified. The app's trust score reflects
+ * how well it verifies identities (via corrections/attributions on bad claims).
+ */
+export interface CustodyClaim {
+  /** The identity being claimed — must match a custody record */
+  identityType: CustodyIdentityType
+  identityValue: string
+  /** The claiming user's Threshold user ID */
+  userId: string
+  /** App-provided evidence of identity verification */
+  verificationMethod: 'phone-otp' | 'email-link' | 'oauth' | 'manual' | 'other'
+  /** Optional: app-defined proof payload (e.g. OTP timestamp, OAuth provider) */
+  evidence?: Record<string, unknown>
 }
 
 /**
@@ -578,6 +681,66 @@ export const CAPABILITY_CONTRACT = {
         expiresAt: 'string — ISO 8601, credential expiry (15 min TTL)',
       },
       note: 'Hybrid approach: Threshold handles auth + trust resolution, but data flows directly between apps. Capabilities verify the credential locally using verifyDataCredential() from the SDK.',
+    },
+  },
+
+  // ── Custody — Custodial-to-Sovereign Data Lifecycle (#61) ───────────────
+  custody: {
+    declare: {
+      endpoint: '/api/custody',
+      method: 'POST' as const,
+      auth: 'appToken' as const,
+      description: 'Declare custody of data about an identified-but-unclaimed entity. The app asserts it holds data and specifies what happens when the entity claims their identity. Returns a custody record ID.',
+      body: {
+        capabilityId: 'string — the capability this custody is associated with',
+        identityType: '"phone" | "email" | "handle" | "name" | "opaque"',
+        identityValue: 'string — the identity value (e.g. "+13035551234", "alice@example.com")',
+        terms: 'CustodyTerms — what happens on claim (transferOnClaim, retainAsConsumer, retainTrustLevel)',
+      },
+      response: {
+        id: 'string — custody record ID',
+        phase: '"custodial"',
+        createdAt: 'string — ISO 8601',
+      },
+    },
+    list: {
+      endpoint: '/api/custody',
+      method: 'GET' as const,
+      auth: ['appToken', 'clerkJwt'] as const,
+      description: 'List custody records. App token: returns records where the app is custodian. Clerk JWT: returns records claimable by or claimed by the user.',
+      queryParams: {
+        phase: 'string? — filter by phase (custodial, claimable, transferring, sovereign)',
+        identity: 'string? — filter by identity value',
+      },
+      response: 'Array<CustodyRecord>',
+    },
+    claim: {
+      endpoint: '/api/custody/claim',
+      method: 'POST' as const,
+      auth: 'clerkJwt' as const,
+      description: 'Claim custodied data by proving identity ownership. Threshold matches the identity against custody records. If transferOnClaim is true in the custody terms, data migration begins automatically. The app\'s access downgrades from "holder" to "consumer" per the declared terms.',
+      body: {
+        identityType: '"phone" | "email" | "handle" | "name" | "opaque"',
+        identityValue: 'string — must match a custody record',
+        verificationMethod: '"phone-otp" | "email-link" | "oauth" | "manual" | "other"',
+        evidence: 'object? — app-defined proof (OTP timestamp, OAuth provider, etc.)',
+      },
+      response: {
+        claimed: 'number — count of custody records matched and claimed',
+        records: 'Array<{ id: string, appId: string, capabilityId: string, phase: CustodyPhase }>',
+      },
+      note: 'Identity verification happens app-side. Threshold trusts the app\'s assertion. Bad claims produce correction signal that degrades the app\'s trust score.',
+    },
+    transfer: {
+      endpoint: '/api/custody/:id/transfer',
+      method: 'POST' as const,
+      auth: 'clerkJwt' as const,
+      description: 'Initiate or complete data transfer from app custody to user vault. Called after claim. The app receives a callback (if registered) to export the data. Once complete, the custody record moves to "sovereign" phase.',
+      response: {
+        phase: '"transferring" | "sovereign"',
+        grantId: 'string? — if retainAsConsumer is true, the grant ID for the app\'s continued access',
+      },
+      note: 'Transfer is async — large datasets may take time. The custody record\'s phase tracks progress. Apps implement a vault export endpoint that Threshold calls with a signed credential.',
     },
   },
 
