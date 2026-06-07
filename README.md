@@ -2,6 +2,23 @@
 
 The public integration surface for Threshold — a trust graph for user-owned capabilities.
 
+## Four questions
+
+When you build your next app, don't ask "what features does it have?" Ask:
+
+1. **What capabilities does it need?**
+2. **Which already exist?** — compose them.
+3. **What's new?** — build it as a capability, not a feature.
+4. **What's left?** — that's the app. Just UI + orchestration.
+
+Your existing app is probably already 5–6 capabilities wearing a UI — a parser, a graph, an inference endpoint, a vault. Point the auditor at it and see:
+
+```bash
+claude -p "$(curl -s https://thresholdlabs.io/api/prompts/audit) --- Audit this codebase."
+```
+
+What Threshold adds is the part you can't get by refactoring: each capability becomes **user-owned and trust-gated** — reusable by your next app, shareable with people the owner trusts, at the granularity the owner chooses.
+
 ## The problem
 
 Every app you use holds a slice of your data. None of them talk to each other unless you hand over credentials and hope for the best. You can't see what you've shared, you can't revoke it cleanly, and you have no way to know whether the tradeoff was worth it.
