@@ -20,6 +20,71 @@ https://thresholdlabs.io
 
 ---
 
+## 0. Try it cold — no account needed
+
+Everything below runs against the production trust graph at thresholdlabs.io. But the differentiated thing — **trust-gated cross-user data flow** — is runnable on your laptop in two minutes, with no account, no token, no network:
+
+```bash
+npx threshold-dev    # mock trust graph + ES256 credential issuer on :8787
+```
+
+The dev server seeds a tiny world: two users (tokens `thld_dev_alice` / `thld_dev_bob`) with a symmetric `friend` trust edge. It generates an ephemeral ECDSA P-256 keypair at startup and signs **real** `thld_va_` credentials — verification on your side is cryptographically honest, just against the dev key instead of the production key.
+
+Walk the whole loop:
+
+```typescript
+import { declareCapability, resolveCapability, requestDataAccess } from '@threshold-labs/integration/capability'
+import { verifyDataCredential } from '@threshold-labs/integration/vault'
+import { projectByTrust } from '@threshold-labs/integration/redact'
+
+const baseUrl = 'http://localhost:8787'
+
+// 1. Alice declares a capability — partial data, friends and up
+await declareCapability({
+  id: 'interest-graph',
+  name: 'Interest Graph',
+  description: 'Per-person interest profiles.',
+  type: 'graph',
+  trustLevel: 'partial',
+  minimumTrust: 'friend',
+  endpoint: 'http://localhost:4040',
+}, { token: 'thld_dev_alice', baseUrl })
+
+// 2. Bob resolves it — the trust edge decides what he sees
+const cap = await resolveCapability('interest-graph', { token: 'thld_dev_bob', baseUrl })
+// cap.trustLevel === 'partial'  (alice resolving her own capability would get 'full')
+
+// 3. Bob requests trust-scoped access — the gate runs, a credential is signed
+const access = await requestDataAccess('interest-graph', { token: 'thld_dev_bob', baseUrl })
+// access.credential is a real signed thld_va_ JWT encoding trustLevel: 'partial'
+
+// 4. Alice's capability endpoint verifies it LOCALLY — no callback to anyone
+const { jwk, issuer } = await fetch(`${baseUrl}/dev/info`).then(r => r.json())
+const payload = await verifyDataCredential(access.credential, {
+  audience: 'interest-graph',
+  publicJwk: jwk,    // omit both options in production — they default to the Threshold key
+  issuer,
+})
+// payload.grantee === 'user:bob', payload.ownerId === 'user:alice', payload.trustLevel === 'partial'
+
+// 5. The capability shapes its response to the credential's trust level
+const body = projectByTrust(graph, payload.trustLevel, {
+  'metadata-only': (g) => ({ people: g.nodes.length, edges: g.edges.length }),
+  partial: (g) => quantizeWeights(g),
+  full: (g) => g,
+})
+```
+
+Three properties worth noticing:
+
+- **The gate refuses, cryptographically.** Declare a second capability with `minimumTrust: 'close'` and bob's `requestDataAccess` throws — `friend < close`. Tamper with one byte of the credential and `verifyDataCredential` throws. Present a credential to the wrong capability and the audience check throws.
+- **Threshold is never in the data path.** Step 4 verifies the signature locally with the public key. The data in step 5 flows app-to-app.
+- **`projectByTrust` falls DOWN, never up.** An undefined projection level degrades to the next *more restrictive* one (`'metadata-only'` is required as the floor). The hand-rolled-if-chain footgun — an unhandled level accidentally serving the full dataset — is structurally impossible.
+
+When you're ready for the real graph, delete `baseUrl`, `publicJwk`, and `issuer` from the calls above and use a real token. Nothing else changes — the dev server is wire-faithful to the production API.
+
+---
+
 ## 1. Register your app
 
 1. Create a Threshold account at [thresholdlabs.io](https://thresholdlabs.io)
