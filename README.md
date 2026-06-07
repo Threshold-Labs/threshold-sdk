@@ -26,6 +26,18 @@ The long-term trajectory is a **certifying protocol**: trust enforcement moves f
 npm install @threshold-labs/integration
 ```
 
+## Try it cold — no account needed
+
+The differentiated thing — trust-gated cross-user data flow — runs on your laptop in two minutes:
+
+```bash
+npx threshold-dev    # mock trust graph + ES256 credential issuer on :8787
+```
+
+Seeded world: two users (`thld_dev_alice` / `thld_dev_bob`), a symmetric `friend` trust edge, and an ephemeral P-256 keypair signing **real** `thld_va_` credentials. Declare a capability as alice, request trust-scoped access as bob, verify the credential cryptographically, shape the response with `projectByTrust`. Wire-faithful to the production API — when you're ready, drop `baseUrl` and the dev key options and nothing else changes.
+
+Full walkthrough: [DEVELOPERS.md §0](./DEVELOPERS.md#0-try-it-cold--no-account-needed).
+
 ## Quick start
 
 ### Declare a capability
@@ -143,6 +155,9 @@ import { THRESHOLD_AUDITOR_PROMPT } from '@threshold-labs/integration/prompts'
 import { ThresholdAuth } from '@threshold-labs/integration/auth'
 import { declareCapability, resolveCapability } from '@threshold-labs/integration/capability'
 import { verifyVaultCredential, verifyDataCredential } from '@threshold-labs/integration/vault'
+import { projectByTrust, filterSensitive, SENSITIVE_GOVERNANCE } from '@threshold-labs/integration/redact'
+import type { MemoryStoreConnector, MemoryEntry } from '@threshold-labs/integration/memory-connector'
+import { createDevServer } from '@threshold-labs/integration/dev-server'
 ```
 
 ## Why structural signatures, not tokens
