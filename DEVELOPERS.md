@@ -30,8 +30,10 @@ Everything below runs against the production trust graph at thresholdlabs.io. Bu
 #   @threshold-labs:registry=https://npm.pkg.github.com
 #   //npm.pkg.github.com/:_authToken=<your-github-pat>
 
-npx threshold-dev    # mock trust graph + ES256 credential issuer on :8787
+npx -p @threshold-labs/integration threshold-dev    # mock trust graph + ES256 credential issuer on :8787
 ```
+
+(Plain `npx threshold-dev` works inside a project that already installed the package. Cold, use the `-p` form — a bare `npx threshold-dev` would resolve against public npm, where the name isn't ours.)
 
 The dev server seeds a tiny world: two users (tokens `thld_dev_alice` / `thld_dev_bob`) with a symmetric `friend` trust edge. It generates an ephemeral ECDSA P-256 keypair at startup and signs **real** `thld_va_` credentials — verification on your side is cryptographically honest, just against the dev key instead of the production key.
 

@@ -39,8 +39,10 @@ npm install @threshold-labs/integration
 The differentiated thing — trust-gated cross-user data flow — runs on your laptop in two minutes:
 
 ```bash
-npx threshold-dev    # mock trust graph + ES256 credential issuer on :8787
+npx -p @threshold-labs/integration threshold-dev    # mock trust graph + ES256 credential issuer on :8787
 ```
+
+(Inside a project that already installed the package, plain `npx threshold-dev` works. The `-p` form matters when running cold — a bare `npx threshold-dev` on a machine without the package would resolve the name against public npm, where it isn't ours.)
 
 Seeded world: two users (`thld_dev_alice` / `thld_dev_bob`), a symmetric `friend` trust edge, and an ephemeral P-256 keypair signing **real** `thld_va_` credentials. Declare a capability as alice, request trust-scoped access as bob, verify the credential cryptographically, shape the response with `projectByTrust`. Wire-faithful to the production API — when you're ready, drop `baseUrl` and the dev key options and nothing else changes.
 
