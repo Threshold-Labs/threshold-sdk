@@ -1,6 +1,6 @@
 {
   "name": "@threshold-labs/integration",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Threshold capability contract, auditor prompt, and integration utilities for external apps",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,6 +34,10 @@
     "./signals": {
       "types": "./dist/signals.d.ts",
       "import": "./dist/signals.js"
+    },
+    "./memory-connector": {
+      "types": "./dist/memory-connector.d.ts",
+      "import": "./dist/memory-connector.js"
     }
   },
   "scripts": {

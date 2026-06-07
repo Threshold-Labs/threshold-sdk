@@ -12,9 +12,13 @@ this package to integrate with the Threshold trust graph.
 | File | Purpose |
 |------|---------|
 | `src/contract.ts` | `INTEGRATION_CONTRACT` — typed definition of every endpoint, auth type, and schema |
+| `src/memory-connector.ts` | `MemoryStoreConnector` — CANONICAL memory-store contract (`./memory-connector` subpath). Pure types. Formerly 3 mirrors: project-control, obsidian-connector, web-activity-connector |
 | `src/prompts/auditor.ts` | `THRESHOLD_AUDITOR_PROMPT` — the integration auditor prompt, served publicly |
 | `src/prompts/index.ts` | Re-exports for the `./prompts` subpath |
 | `src/index.ts` | Root export (re-exports everything) |
+
+Note: `./contract` is the *capability/trust* contract; `./memory-connector` is the
+*memory-store* contract. Different things — don't merge them.
 
 ## Intake process
 
