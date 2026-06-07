@@ -268,3 +268,51 @@ export async function verifyDataCredential(
     expiresAt: new Date(payload.exp * 1000),
   }
 }
+
+/** Result of gating an incoming request on a data credential — never throws. */
+export type DataCredentialGateResult =
+  | { ok: true; payload: DataCredentialPayload }
+  | { ok: false; status: 401; error: string }
+
+/**
+ * Gate an incoming HTTP request on a Pattern 6b data credential.
+ *
+ * The non-throwing front door for capability endpoints — wraps the
+ * missing-header check and verifyDataCredential's error handling into one
+ * call that maps directly onto a response (canonicalized from interest-graph
+ * v0.3 + calendar-graph v0.1, which both hand-rolled this block):
+ *
+ *   const gate = await gateDataRequest(req.headers.authorization, {
+ *     audience: 'my-capability', publicJwk, issuer,   // dev keys optional
+ *   })
+ *   if (!gate.ok) return json(res, { error: gate.error }, gate.status)
+ *   const body = projectByTrust(data, gate.payload.trustLevel, projections)
+ *
+ * Transport-agnostic: takes the Authorization header VALUE (or undefined),
+ * not a request object — works with node:http, fetch handlers, and Workers.
+ */
+export async function gateDataRequest(
+  authorizationHeader: string | undefined | null,
+  options: {
+    audience: string
+    crypto?: Crypto
+    /** Override the signing public key (e.g. a threshold-dev ephemeral key). Defaults to production. */
+    publicJwk?: JsonWebKey
+    /** Override the expected issuer. Defaults to production (https://thresholdlabs.io). */
+    issuer?: string
+  }
+): Promise<DataCredentialGateResult> {
+  if (!authorizationHeader) {
+    return { ok: false, status: 401, error: 'this endpoint requires a thld_va_ data credential' }
+  }
+  try {
+    const payload = await verifyDataCredential(authorizationHeader, options)
+    return { ok: true, payload }
+  } catch (err) {
+    return {
+      ok: false,
+      status: 401,
+      error: err instanceof Error ? err.message : 'credential verification failed',
+    }
+  }
+}

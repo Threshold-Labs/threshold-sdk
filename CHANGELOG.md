@@ -2,6 +2,10 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## 0.17.0 — 2026-06-07
+
+**`./vault`: `gateDataRequest`** — the non-throwing capability front door for Pattern 6b. Takes the Authorization header value (transport-agnostic: node:http, fetch handlers, Workers) and returns `{ok: true, payload} | {ok: false, status: 401, error}` — maps directly onto a response. **`./dev-server`: `devVerifyOptions(url)`** — fetches `{publicJwk, issuer}` from a running threshold-dev's `/dev/info`. Both canonicalized from interest-graph v0.3 + calendar-graph v0.1, which hand-rolled the same gate boilerplate.
+
 ## 0.16.0 — 2026-06-07
 
 **`./redact`: canonical `SENSITIVE_GOVERNANCE` boundary.** `{client, personal-sensitive}` surfaces ONLY at trust level `full` — absorbed after web-activity and project-control converged on the same set independently at their read surfaces. New: `SENSITIVE_GOVERNANCE` set, `governanceVisibleAt(governance, trustLevel)`, `filterSensitive(items)` (generic over `{governance}`, for use inside projection rungs so downward fallback can never leak). `subgraph` does not cross the line: a shape grant is not a sensitivity grant.

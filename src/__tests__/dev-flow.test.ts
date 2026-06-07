@@ -7,14 +7,14 @@
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { createDevServer, type DevServerHandle } from '../dev-server.js'
+import { createDevServer, devVerifyOptions, type DevServerHandle } from '../dev-server.js'
 import {
   declareCapability,
   listCapabilities,
   resolveCapability,
   requestDataAccess,
 } from '../capability.js'
-import { verifyDataCredential, VaultCredentialError } from '../vault.js'
+import { gateDataRequest, verifyDataCredential, VaultCredentialError } from '../vault.js'
 
 const PORT = 8798
 const ALICE = 'thld_dev_alice'
@@ -123,4 +123,32 @@ test('unknown token is refused', async () => {
     listCapabilities({ token: 'thld_dev_mallory', baseUrl }),
     /Unauthorized/
   )
+})
+
+test('devVerifyOptions fetches the dev key — equivalent to handle.jwk/issuer', async () => {
+  const verify = await devVerifyOptions(dev.issuer)
+  assert.equal(verify.issuer, dev.issuer)
+  assert.deepEqual(verify.publicJwk, dev.jwk)
+})
+
+test('gateDataRequest: the non-throwing capability front door', async () => {
+  const access = await requestDataAccess('interest-graph', { token: BOB, baseUrl })
+  const verify = await devVerifyOptions(dev.issuer)
+
+  // Missing header → 401, no throw.
+  const missing = await gateDataRequest(undefined, { audience: 'interest-graph', ...verify })
+  assert.deepEqual(missing, { ok: false, status: 401, error: 'this endpoint requires a thld_va_ data credential' })
+
+  // Tampered credential → 401, no throw.
+  const tampered = await gateDataRequest(`Bearer ${access.credential.slice(0, -6)}AAAAAA`, {
+    audience: 'interest-graph',
+    ...verify,
+  })
+  assert.equal(tampered.ok, false)
+
+  // Valid credential (with the Bearer prefix, as it arrives on the wire) → payload.
+  const gate = await gateDataRequest(`Bearer ${access.credential}`, { audience: 'interest-graph', ...verify })
+  assert.ok(gate.ok)
+  assert.equal(gate.payload.trustLevel, 'partial')
+  assert.equal(gate.payload.grantee, 'user:bob')
 })

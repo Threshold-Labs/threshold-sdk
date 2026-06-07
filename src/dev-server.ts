@@ -95,6 +95,25 @@ async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> 
   }
 }
 
+/**
+ * Fetch verification options from a running threshold-dev (or any server
+ * exposing GET /dev/info) — the client-side half of the injectable-key flow.
+ * Canonicalized from interest-graph/calendar-graph, which both hand-rolled
+ * the TRUST_ISSUER → /dev/info fetch:
+ *
+ *   const verify = process.env.TRUST_ISSUER
+ *     ? await devVerifyOptions(process.env.TRUST_ISSUER)
+ *     : {}   // production defaults
+ *   await verifyDataCredential(bearer, { audience: 'my-capability', ...verify })
+ */
+export async function devVerifyOptions(devServerUrl: string): Promise<{ publicJwk: JsonWebKey; issuer: string }> {
+  const info = (await fetch(`${devServerUrl}/dev/info`).then((r) => r.json())) as {
+    jwk: JsonWebKey
+    issuer: string
+  }
+  return { publicJwk: info.jwk, issuer: info.issuer }
+}
+
 export async function createDevServer(options: DevServerOptions = {}): Promise<DevServerHandle> {
   const port = options.port ?? Number(process.env.PORT) ?? 8787
   const issuer = `http://localhost:${port}`
