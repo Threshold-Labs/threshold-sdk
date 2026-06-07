@@ -1,8 +1,11 @@
 {
   "name": "@threshold-labs/integration",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Threshold capability contract, auditor prompt, and integration utilities for external apps",
   "type": "module",
+  "bin": {
+    "threshold-registry": "./dist/cli.js"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -50,6 +53,7 @@
     "!dist/**/__tests__"
   ],
   "devDependencies": {
+    "@types/node": "^25.9.2",
     "typescript": "^5.9.3"
   },
   "keywords": [
