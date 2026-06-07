@@ -220,6 +220,149 @@ export async function heartbeat(
   return res.json() as Promise<HeartbeatResult>
 }
 
+export interface ListCapabilitiesOptions {
+  /** Clerk JWT or app token */
+  token: string
+  /** Override base URL (default: https://thresholdlabs.io) */
+  baseUrl?: string
+}
+
+/**
+ * A capability as registered in the Threshold registry.
+ * Normalized from the wire format (snake_case row, JSON-string declaration).
+ */
+export interface RegisteredCapability {
+  /** Registry UUID */
+  id: string
+  /** Owner-scoped capability id, e.g. 'interest-graph' */
+  capabilityId: string
+  name: string
+  type: string | null
+  canonicalFor: string | null
+  trustLevel: string
+  minimumTrust: string
+  endpoint: string | null
+  status: string
+  adherenceScore: number | null
+  createdAt: string
+  updatedAt: string
+  /** Full behavioral contract, if registered */
+  declaration: CapabilityDeclaration | null
+}
+
+/** Raw row shape returned by GET /api/capabilities (D1 snake_case). */
+interface CapabilityRow {
+  id: string
+  capability_id: string
+  name: string
+  type: string | null
+  canonical_for: string | null
+  trust_level: string
+  minimum_trust: string
+  endpoint: string | null
+  status: string
+  adherence_score: number | null
+  created_at: string
+  updated_at: string
+  declaration: string | null
+}
+
+/**
+ * List all capabilities owned by the authenticated user.
+ *
+ * This is the readable registry — the answer to "what already exists, so I
+ * don't build it twice?" Works for humans (browse your catalog) and for
+ * coding agents (call it before scaffolding anything new; see
+ * registryMarkdown() for a context-window-friendly digest).
+ *
+ * @example
+ * ```ts
+ * const caps = await listCapabilities({ token: appToken })
+ * const existing = caps.find(c => c.capabilityId === 'local-inference')
+ * if (existing) {
+ *   // compose it — don't rebuild it
+ * }
+ * ```
+ */
+export async function listCapabilities(
+  options: ListCapabilitiesOptions
+): Promise<RegisteredCapability[]> {
+  const baseUrl = options.baseUrl || CAPABILITY_CONTRACT.baseUrl
+  const res = await fetch(`${baseUrl}/api/capabilities`, {
+    headers: {
+      Authorization: `Bearer ${options.token}`,
+    },
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText })) as { error: string }
+    throw new Error(`listCapabilities failed: ${err.error}`)
+  }
+
+  const rows = await res.json() as CapabilityRow[]
+  return rows.map((row) => {
+    let declaration: CapabilityDeclaration | null = null
+    if (row.declaration) {
+      try {
+        declaration = JSON.parse(row.declaration) as CapabilityDeclaration
+      } catch {
+        // tolerate malformed legacy rows — the row fields still describe the capability
+      }
+    }
+    return {
+      id: row.id,
+      capabilityId: row.capability_id,
+      name: row.name,
+      type: row.type,
+      canonicalFor: row.canonical_for,
+      trustLevel: row.trust_level,
+      minimumTrust: row.minimum_trust,
+      endpoint: row.endpoint,
+      status: row.status,
+      adherenceScore: row.adherence_score,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      declaration,
+    }
+  })
+}
+
+/**
+ * Render a registry listing as a compact markdown digest.
+ *
+ * Designed to be pasted into a project's CLAUDE.md (or injected into an
+ * agent's context) so coding agents check the registry before building:
+ * each row carries enough contract to decide "compose, don't rebuild."
+ *
+ * @example
+ * ```ts
+ * const caps = await listCapabilities({ token: appToken })
+ * console.log(registryMarkdown(caps))
+ * ```
+ */
+export function registryMarkdown(capabilities: RegisteredCapability[]): string {
+  const active = capabilities.filter((c) => c.status === 'active')
+  const lines = [
+    '## Threshold capability registry — check before building',
+    '',
+    'These capabilities already exist. Compose them (`resolveCapability` + `requestDataAccess`',
+    "from `@threshold-labs/integration/capability`) instead of rebuilding them.",
+    '',
+    '| id | type | trust | description |',
+    '|---|---|---|---|',
+  ]
+  for (const cap of active) {
+    const description = cap.declaration?.description ?? cap.name
+    const deps = cap.declaration?.requiredCapabilities?.length
+      ? ` (requires: ${cap.declaration.requiredCapabilities.join(', ')})`
+      : ''
+    lines.push(
+      `| \`${cap.capabilityId}\` | ${cap.type ?? '—'} | ${cap.trustLevel}/${cap.minimumTrust} | ${description}${deps} |`
+    )
+  }
+  return lines.join('\n')
+}
+
 export interface ComposeCapabilitiesOptions {
   /** Clerk JWT or app token */
   token: string
