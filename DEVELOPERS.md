@@ -22,9 +22,14 @@ https://thresholdlabs.io
 
 ## 0. Try it cold — no account needed
 
-Everything below runs against the production trust graph at thresholdlabs.io. But the differentiated thing — **trust-gated cross-user data flow** — is runnable on your laptop in two minutes, with no account, no token, no network:
+Everything below runs against the production trust graph at thresholdlabs.io. But the differentiated thing — **trust-gated cross-user data flow** — is runnable on your laptop in two minutes, with no Threshold account, no token, no network:
 
 ```bash
+# One-time: the package lives on GitHub Package Registry, which requires auth
+# even for public packages. Any GitHub PAT with read:packages works. In ~/.npmrc:
+#   @threshold-labs:registry=https://npm.pkg.github.com
+#   //npm.pkg.github.com/:_authToken=<your-github-pat>
+
 npx threshold-dev    # mock trust graph + ES256 credential issuer on :8787
 ```
 

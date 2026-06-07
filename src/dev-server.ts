@@ -115,7 +115,10 @@ export async function devVerifyOptions(devServerUrl: string): Promise<{ publicJw
 }
 
 export async function createDevServer(options: DevServerOptions = {}): Promise<DevServerHandle> {
-  const port = options.port ?? Number(process.env.PORT) ?? 8787
+  // NaN is not nullish: `Number(undefined) ?? 8787` stays NaN, which crashed
+  // bare `npx threshold-dev` (no PORT env). Default explicitly.
+  const envPort = process.env.PORT ? Number(process.env.PORT) : undefined
+  const port = options.port ?? (envPort !== undefined && Number.isFinite(envPort) ? envPort : 8787)
   const issuer = `http://localhost:${port}`
 
   // Ephemeral signing keypair — credentials die with the process. By design.

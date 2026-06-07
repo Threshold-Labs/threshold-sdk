@@ -22,6 +22,14 @@ The long-term trajectory is a **certifying protocol**: trust enforcement moves f
 
 ## Install
 
+Published to **GitHub Package Registry** — one-time setup (GitHub requires auth even for public packages; any GitHub PAT with `read:packages` works):
+
+```bash
+# ~/.npmrc (or project .npmrc)
+@threshold-labs:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<your-github-pat>
+```
+
 ```bash
 npm install @threshold-labs/integration
 ```

@@ -125,6 +125,21 @@ test('unknown token is refused', async () => {
   )
 })
 
+test('createDevServer defaults to 8787 when no port option and no PORT env (the bare `npx threshold-dev` path)', async () => {
+  // Regression: `Number(undefined) ?? 8787` stays NaN (NaN is not nullish) —
+  // bare `npx threshold-dev` crashed on listen(NaN). Published broken in 0.17.2.
+  const savedPort = process.env.PORT
+  delete process.env.PORT
+  try {
+    const bare = await createDevServer()
+    assert.equal(bare.port, 8787)
+    assert.equal(bare.issuer, 'http://localhost:8787')
+    await bare.close()
+  } finally {
+    if (savedPort !== undefined) process.env.PORT = savedPort
+  }
+})
+
 test('devVerifyOptions fetches the dev key — equivalent to handle.jwk/issuer', async () => {
   const verify = await devVerifyOptions(dev.issuer)
   assert.equal(verify.issuer, dev.issuer)

@@ -85,8 +85,11 @@ of the trust-gated flow against threshold-dev). Add tests with new logic.
 | threshold-capabilities: overlap | `./vault`, `./redact`, `./dev-server`, `./capability` | The multiplayer keystone — full Tier-0 stack |
 | threshold-capabilities: interest-graph, calendar-graph, reading-history | `./vault` (`gateDataRequest`), `./redact`, `./dev-server` | Pattern 6b read surfaces |
 
-Local consumers use `"@threshold-labs/integration": "file:../../threshold-complete/threshold-sdk"`
-until the package is npm-published. When adding a new consumer, update this table.
+**Published to GitHub Package Registry** (v0.17.2+, 2026-06-07). External consumers need
+`@threshold-labs:registry=https://npm.pkg.github.com` + a PAT with `read:packages` in `.npmrc`
+(GitHub requires auth even for public packages). Local sibling repos keep the
+`"file:../../threshold-complete/threshold-sdk"` link — it's the right choice for same-machine
+co-development (changes land without republish). When adding a new consumer, update this table.
 
 ## Relationship to @threshold-labs/core
 

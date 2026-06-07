@@ -2,6 +2,10 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## 0.17.3 — 2026-06-07
+
+**Fix: bare `npx threshold-dev` crashed** when no `PORT` env was set — `Number(undefined) ?? 8787` stays `NaN` (NaN is not nullish), so the bin tried `listen(NaN)`. Caught by the first cold `npx` smoke test minutes after 0.17.2 was published; every prior test passed `options.port` explicitly. Regression test added (21 tests). Also: README/DEVELOPERS install steps now include the GitHub Package Registry `.npmrc` setup — GitHub requires auth (`read:packages` PAT) even for public packages.
+
 ## 0.17.2 — 2026-06-07
 
 Doc-only: **DEVELOPERS.md §5b — the Pattern 6b provider template**, canonicalized from three field adoptions (interest-graph, calendar-graph, reading-history). The three-piece shape (projection module / 3-line gate / cold e2e), the three proven test flavors (rung projection + leak scan, forged credential, the trust gate itself refusing), and the when-NOT-to-gate rule (pure functions, caller-supplied-credential pass-throughs — from threshold-capabilities' hazard sweep).
