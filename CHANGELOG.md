@@ -2,6 +2,10 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## 0.17.1 — 2026-06-07
+
+Doc-only: **the gate-vs-knob boundary**, canonical in `./redact`. `projectByTrust`'s `trustLevel` has two legitimate sources — a verified credential (`gateDataRequest`; required across any trust boundary) or a caller-specified knob (legitimate only where the transport IS the boundary: MCP stdio, loopback). Forward hazard documented: a knob surface whose binding widens must switch to the gate, or `trust=full` becomes an unauthenticated firewall hole. Converged independently by web-activity `1c40253` ⇄ project-control `218ac9f`.
+
 ## 0.17.0 — 2026-06-07
 
 **`./vault`: `gateDataRequest`** — the non-throwing capability front door for Pattern 6b. Takes the Authorization header value (transport-agnostic: node:http, fetch handlers, Workers) and returns `{ok: true, payload} | {ok: false, status: 401, error}` — maps directly onto a response. **`./dev-server`: `devVerifyOptions(url)`** — fetches `{publicJwk, issuer}` from a running threshold-dev's `/dev/info`. Both canonicalized from interest-graph v0.3 + calendar-graph v0.1, which hand-rolled the same gate boilerplate.

@@ -23,6 +23,22 @@
  *     full: (g) => g,
  *     // 'partial' undefined → a partial-level caller gets the redacted projection
  *   })
+ *
+ * WHERE trustLevel COMES FROM (the gate-vs-knob boundary — canonical as of
+ * 0.17.1, converged independently by web-activity 1c40253 ⇄ project-control
+ * 218ac9f): projectByTrust doesn't care how `trustLevel` was obtained, so the
+ * caller must. Two legitimate sources:
+ *
+ *   - GATE: a verified credential — gateDataRequest()/verifyDataCredential().
+ *     Required on ANY surface reachable across a trust boundary (HTTP beyond
+ *     loopback, tunnels, reverse proxies, cross-user anything).
+ *   - KNOB: a caller-specified parameter (?trust=..., a tool argument). Legitimate
+ *     ONLY where the transport itself is the trust boundary — an MCP stdio tool
+ *     spawned by the consumer, a loopback-bound single-user dashboard.
+ *
+ * The forward hazard: a knob surface later exposed beyond its boundary turns
+ * `trust=full` into an unauthenticated request for client + personal-sensitive
+ * data. If a knob endpoint's binding ever widens, it MUST switch to the gate.
  */
 
 import type { TrustLevel } from './contract.js'
