@@ -26,6 +26,7 @@
  */
 
 import type { TrustLevel } from './contract.js'
+import type { Governance } from './memory-connector.js'
 
 /** Least → most permissive. 'subgraph' is intentionally absent — it is a
  *  filter grant, not a rung, and never participates in fallback. */
@@ -48,6 +49,50 @@ export interface TrustProjections<T> {
 export type ProjectionResult<T, P extends TrustProjections<T>> = ReturnType<
   NonNullable<P['metadata-only'] | P['redacted'] | P['partial'] | P['full'] | P['subgraph']>
 >
+
+/**
+ * Governance levels that surface ONLY at trust level 'full'.
+ *
+ * CANONICAL as of @0.16.0 — this boundary decision was converged on
+ * independently in the field (web-activity 836e425 ⇄ project-control 7633aa7,
+ * same night, cross-referenced) and is absorbed here so every connector's read
+ * surface agrees: a 'partial'-level caller sees the same governance projection
+ * at every boundary in the stack.
+ *
+ *   - 'client'             — the hard firewall. Never cross-syncs into Threshold.
+ *   - 'personal-sensitive' — the privacy floor.
+ *
+ * 'subgraph' does NOT cross this line: a caller-specified filter is a shape
+ * grant, not a sensitivity grant. Only exactly 'full' surfaces sensitive entries.
+ */
+export const SENSITIVE_GOVERNANCE: ReadonlySet<string> = new Set<Governance>([
+  'client',
+  'personal-sensitive',
+])
+
+/** Is an entry with this governance visible to a caller at this trust level?
+ *  Sensitive governance ⇒ only at exactly 'full'. Everything else ⇒ always. */
+export function governanceVisibleAt(
+  governance: Governance | string,
+  trustLevel: TrustLevel | string
+): boolean {
+  return SENSITIVE_GOVERNANCE.has(governance) ? trustLevel === 'full' : true
+}
+
+/** Filter a collection to what is visible BELOW 'full' — sensitive entries
+ *  (client + personal-sensitive) removed structurally, so a downward fallback
+ *  inside projectByTrust can never leak one. Use inside every projection rung
+ *  except 'full':
+ *
+ *    projectByTrust(entries, trustLevel, {
+ *      'metadata-only': (all) => summarize(filterSensitive(all)),
+ *      partial: (all) => filterSensitive(all),
+ *      full: (all) => all,   // the ONLY rung that crosses the line
+ *    })
+ */
+export function filterSensitive<T extends { governance: Governance | string }>(items: T[]): T[] {
+  return items.filter((item) => !SENSITIVE_GOVERNANCE.has(item.governance))
+}
 
 export class TrustProjectionError extends Error {
   constructor(message: string) {

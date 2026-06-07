@@ -5,7 +5,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { projectByTrust, TrustProjectionError } from '../redact.js'
+import {
+  filterSensitive,
+  governanceVisibleAt,
+  projectByTrust,
+  SENSITIVE_GOVERNANCE,
+  TrustProjectionError,
+} from '../redact.js'
 
 interface Graph {
   nodes: string[]
@@ -57,4 +63,47 @@ test('subgraph requires an explicit projection', () => {
 
 test('unknown trust level refuses to project', () => {
   assert.throws(() => projectByTrust(graph, 'admin', fullSet), /unknown trust level 'admin'/)
+})
+
+// ── Sensitive-governance boundary (canonical as of 0.16.0) ──────────────────
+
+const entries = [
+  { id: 'a', governance: 'open' },
+  { id: 'b', governance: 'internal' },
+  { id: 'c', governance: 'client' },
+  { id: 'd', governance: 'personal-sensitive' },
+  { id: 'e', governance: 'research' },
+]
+
+test('sensitive governance is visible ONLY at exactly full', () => {
+  for (const g of SENSITIVE_GOVERNANCE) {
+    assert.equal(governanceVisibleAt(g, 'full'), true)
+    for (const level of ['metadata-only', 'redacted', 'partial', 'subgraph']) {
+      assert.equal(governanceVisibleAt(g, level), false, `${g} must be hidden at ${level}`)
+    }
+  }
+  // Non-sensitive governance is visible everywhere.
+  assert.equal(governanceVisibleAt('open', 'metadata-only'), true)
+  assert.equal(governanceVisibleAt('internal', 'redacted'), true)
+})
+
+test('filterSensitive removes client + personal-sensitive, keeps the rest', () => {
+  assert.deepEqual(
+    filterSensitive(entries).map((e) => e.id),
+    ['a', 'b', 'e']
+  )
+})
+
+test('filterSensitive inside projection rungs: downward fallback cannot leak', () => {
+  const projections = {
+    'metadata-only': (all: typeof entries) => ({ count: filterSensitive(all).length }),
+    partial: (all: typeof entries) => filterSensitive(all).map((e) => e.id),
+    full: (all: typeof entries) => all.map((e) => e.id),
+  }
+  // partial-level caller never sees c/d
+  assert.deepEqual(projectByTrust(entries, 'partial', projections), ['a', 'b', 'e'])
+  // redacted undefined → falls DOWN to metadata-only, still sensitive-free
+  assert.deepEqual(projectByTrust(entries, 'redacted', projections), { count: 3 })
+  // only full crosses the line
+  assert.deepEqual(projectByTrust(entries, 'full', projections), ['a', 'b', 'c', 'd', 'e'])
 })
