@@ -74,9 +74,18 @@ function base64urlDecode(str: string): Uint8Array {
  */
 export async function verifyVaultCredential(
   token: string,
-  options: { audience: string; crypto?: Crypto }
+  options: {
+    audience: string
+    crypto?: Crypto
+    /** Override the signing public key (e.g. a threshold-dev ephemeral key). Defaults to production. */
+    publicJwk?: JsonWebKey
+    /** Override the expected issuer. Defaults to production (https://thresholdlabs.io). */
+    issuer?: string
+  }
 ): Promise<VaultCredentialPayload> {
   const subtle = (options.crypto ?? globalThis.crypto).subtle
+  const expectedIssuer = options.issuer ?? VAULT_ISSUER
+  const publicJwk = options.publicJwk ?? VAULT_PUBLIC_JWK
 
   // Strip prefix
   const raw = token.replace(/^Bearer\s+/i, '').replace(VAULT_TOKEN_PREFIX, '')
@@ -101,7 +110,7 @@ export async function verifyVaultCredential(
 
   // Validate claims
   const now = Math.floor(Date.now() / 1000)
-  if (payload.iss !== VAULT_ISSUER) {
+  if (payload.iss !== expectedIssuer) {
     throw new VaultCredentialError(`Invalid issuer: ${payload.iss}`)
   }
   if (payload.aud !== options.audience) {
@@ -116,7 +125,7 @@ export async function verifyVaultCredential(
 
   // Verify signature
   const publicKey = await subtle.importKey(
-    'jwk', VAULT_PUBLIC_JWK,
+    'jwk', publicJwk,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false, ['verify']
   )
@@ -180,9 +189,18 @@ export interface DataCredentialPayload {
  */
 export async function verifyDataCredential(
   token: string,
-  options: { audience: string; crypto?: Crypto }
+  options: {
+    audience: string
+    crypto?: Crypto
+    /** Override the signing public key (e.g. a threshold-dev ephemeral key). Defaults to production. */
+    publicJwk?: JsonWebKey
+    /** Override the expected issuer. Defaults to production (https://thresholdlabs.io). */
+    issuer?: string
+  }
 ): Promise<DataCredentialPayload> {
   const subtle = (options.crypto ?? globalThis.crypto).subtle
+  const expectedIssuer = options.issuer ?? VAULT_ISSUER
+  const publicJwk = options.publicJwk ?? VAULT_PUBLIC_JWK
 
   // Strip prefix
   const raw = token.replace(/^Bearer\s+/i, '').replace(VAULT_TOKEN_PREFIX, '')
@@ -207,7 +225,7 @@ export async function verifyDataCredential(
 
   // Validate claims
   const now = Math.floor(Date.now() / 1000)
-  if (payload.iss !== VAULT_ISSUER) {
+  if (payload.iss !== expectedIssuer) {
     throw new VaultCredentialError(`Invalid issuer: ${payload.iss}`)
   }
   if (payload.aud !== options.audience) {
@@ -222,7 +240,7 @@ export async function verifyDataCredential(
 
   // Verify signature
   const publicKey = await subtle.importKey(
-    'jwk', VAULT_PUBLIC_JWK,
+    'jwk', publicJwk,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false, ['verify']
   )

@@ -13,6 +13,8 @@ this package to integrate with the Threshold trust graph.
 |------|---------|
 | `src/contract.ts` | `INTEGRATION_CONTRACT` — typed definition of every endpoint, auth type, and schema |
 | `src/memory-connector.ts` | `MemoryStoreConnector` — CANONICAL memory-store contract (`./memory-connector` subpath). Pure types. Formerly 3 mirrors: project-control, obsidian-connector, web-activity-connector |
+| `src/dev-server.ts` | `threshold-dev` bin — local mock trust graph + ES256 token issuer (Tier 0: the trust-gated flow, runnable cold) |
+| `src/cli.ts` | `threshold-registry` bin — readable registry digest for humans + agents |
 | `src/prompts/auditor.ts` | `THRESHOLD_AUDITOR_PROMPT` — the integration auditor prompt, served publicly |
 | `src/prompts/index.ts` | Re-exports for the `./prompts` subpath |
 | `src/index.ts` | Root export (re-exports everything) |
