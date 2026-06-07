@@ -16,6 +16,7 @@ this package to integrate with the Threshold trust graph.
 | `src/dev-server.ts` | `threshold-dev` bin — local mock trust graph + ES256 token issuer (Tier 0: the trust-gated flow, runnable cold) |
 | `src/redact.ts` | `projectByTrust` (`./redact`) — trust-level response projection with fall-DOWN-only semantics; capability-side half of Pattern 6b. Also CANONICAL `SENSITIVE_GOVERNANCE` boundary ({client, personal-sensitive} → full-only) + `governanceVisibleAt`/`filterSensitive` |
 | `src/vault.ts` (gate) | `gateDataRequest` — non-throwing Pattern 6b front door for capability endpoints (header value in, `{ok,payload}\|{ok:false,401,error}` out); pairs with `devVerifyOptions` in dev-server |
+| `src/serve.ts` | `serveVault` (`./serve`) — one-call trust-gated capability server (gate + projection + node:http); the serving half of the vault exchange, absorbed from 3 hand-rolled capability servers. Node-only |
 | `src/cli.ts` | `threshold-registry` bin — readable registry digest for humans + agents |
 | `src/prompts/auditor.ts` | `THRESHOLD_AUDITOR_PROMPT` — the integration auditor prompt, served publicly |
 | `src/prompts/index.ts` | Re-exports for the `./prompts` subpath |

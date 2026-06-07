@@ -90,6 +90,22 @@ Three properties worth noticing:
 
 When you're ready for the real graph, delete `baseUrl`, `publicJwk`, and `issuer` from the calls above and use a real token. Nothing else changes — the dev server is wire-faithful to the production API.
 
+Steps 4–5 (verify + project) collapse into one call if alice's side runs on Node — `serveVault`
+stands up the whole gated endpoint (see §5b):
+
+```typescript
+import { serveVault } from '@threshold-labs/integration/serve'
+import { devVerifyOptions } from '@threshold-labs/integration/dev-server'
+
+const vault = await serveVault({
+  audience: 'interest-graph',
+  getData: () => graph,
+  projections: { 'metadata-only': (g) => ({ people: g.nodes.length }), partial: quantizeWeights, full: (g) => g },
+  ...(await devVerifyOptions(baseUrl)),
+})
+// bob, app-to-app: fetch(vault.url, { headers: { Authorization: `Bearer ${access.credential}` } })
+```
+
 ---
 
 ## 1. Register your app
@@ -206,9 +222,30 @@ The credential encodes the trust level. The capability reads it and filters its 
 
 ## 5b. Serve a trust-gated capability (Pattern 6b)
 
-The provider side of §5. This template is canonical as of 0.17.2 — proven across three
-capabilities (interest-graph, calendar-graph, reading-history), each shaped the same way.
-Three pieces:
+The provider side of §5. **The one-call form** (0.18.0+, Node) — gate + projection + server
+in one call:
+
+```typescript
+import { serveVault } from '@threshold-labs/integration/serve'
+
+const vault = await serveVault({
+  audience: 'interest-graph',
+  getData: () => graph,
+  projections: {
+    'metadata-only': (g) => ({ people: g.nodes.length }),  // required floor
+    partial: (g) => quantize(g),
+    full: (g) => g,
+  },
+  // dev: { publicJwk, issuer } from threshold-dev (or set TRUST_ISSUER);
+  // omit in production to verify against the Threshold key.
+})
+// vault.url is live: GET it with a thld_va_ credential, response arrives projected.
+```
+
+That's a complete trust-gated capability server. When you outgrow one read surface
+(multiple routes, POST ingestion, caching), graduate to the full template below — it's
+what serveVault is made of, proven across three capabilities (interest-graph,
+calendar-graph, reading-history), each shaped the same way. Three pieces:
 
 **1. A projection module** — one function, one `projectByTrust` call, every rung a conscious
 decision. Decide ONCE what each trust level reveals, in a file a reviewer can read top to bottom:

@@ -2,6 +2,10 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## 0.18.0 — 2026-06-07
+
+**`./serve`: `serveVault`** — the one-call trust-gated capability server, completing the last Tier 0 roadmap bullet (the serving half of the vault exchange; the verification half shipped in v0.13/v0.17). `serveVault({audience, getData, projections, port?, publicJwk?, issuer?})` → gated `GET /data` (projected by credential trust level, `?params` → subgraph) + open `GET /health`. Absorbed from the skeleton three capabilities hand-rolled (interest-graph, calendar-graph, reading-history). Node-only subpath; Workers surfaces keep composing `gateDataRequest` + `projectByTrust` directly. The floor, not the ceiling — multi-route capabilities graduate to the §5b template.
+
 ## 0.17.3 — 2026-06-07
 
 **Fix: bare `npx threshold-dev` crashed** when no `PORT` env was set — `Number(undefined) ?? 8787` stays `NaN` (NaN is not nullish), so the bin tried `listen(NaN)`. Caught by the first cold `npx` smoke test minutes after 0.17.2 was published; every prior test passed `options.port` explicitly. Regression test added (21 tests). Also: README/DEVELOPERS install steps now include the GitHub Package Registry `.npmrc` setup — GitHub requires auth (`read:packages` PAT) even for public packages.

@@ -15,6 +15,7 @@ import {
   requestDataAccess,
 } from '../capability.js'
 import { gateDataRequest, verifyDataCredential, VaultCredentialError } from '../vault.js'
+import { serveVault } from '../serve.js'
 
 const PORT = 8798
 const ALICE = 'thld_dev_alice'
@@ -166,4 +167,51 @@ test('gateDataRequest: the non-throwing capability front door', async () => {
   assert.ok(gate.ok)
   assert.equal(gate.payload.trustLevel, 'partial')
   assert.equal(gate.payload.grantee, 'user:bob')
+})
+
+test('serveVault: the one-call capability server — gate + projection, cold', async () => {
+  const graph = {
+    nodes: [{ id: 'p1', name: 'Gia', weight: 0.873 }, { id: 'p2', name: 'Dustin', weight: 0.412 }],
+  }
+  const vault = await serveVault({
+    audience: 'interest-graph',
+    port: 0, // ephemeral
+    publicJwk: dev.jwk,
+    issuer: dev.issuer,
+    getData: () => graph,
+    projections: {
+      'metadata-only': (g) => ({ people: g.nodes.length }),
+      partial: (g) => ({ nodes: g.nodes.map((n) => ({ id: n.id, weight: Math.round(n.weight * 10) / 10 })) }),
+      full: (g) => g,
+    },
+  })
+  try {
+    // Bare request → 401.
+    assert.equal((await fetch(vault.url)).status, 401)
+
+    // /health is open.
+    const health = (await fetch(`http://localhost:${vault.port}/health`).then((r) => r.json())) as {
+      healthy: boolean
+      capability: string
+    }
+    assert.equal(health.healthy, true)
+    assert.equal(health.capability, 'interest-graph')
+
+    // friend-tier caller gets the partial projection — names never cross.
+    const access = await requestDataAccess('interest-graph', { token: BOB, baseUrl })
+    const res = await fetch(vault.url, { headers: { Authorization: `Bearer ${access.credential}` } })
+    assert.equal(res.status, 200)
+    const body = (await res.json()) as { nodes: Array<{ id: string; weight: number }> }
+    assert.deepEqual(body, { nodes: [{ id: 'p1', weight: 0.9 }, { id: 'p2', weight: 0.4 }] })
+    assert.doesNotMatch(JSON.stringify(body), /Gia|Dustin|0\.873/)
+
+    // Owner reads full.
+    const owner = await requestDataAccess('interest-graph', { token: ALICE, baseUrl })
+    const fullBody = (await fetch(vault.url, {
+      headers: { Authorization: `Bearer ${owner.credential}` },
+    }).then((r) => r.json())) as typeof graph
+    assert.deepEqual(fullBody, graph)
+  } finally {
+    await vault.close()
+  }
 })
