@@ -15,6 +15,7 @@ this package to integrate with the Threshold trust graph.
 | `src/memory-connector.ts` | `MemoryStoreConnector` — CANONICAL memory-store contract (`./memory-connector` subpath). Pure types. Formerly 3 mirrors: project-control, obsidian-connector, web-activity-connector |
 | `src/dev-server.ts` | `threshold-dev` bin — local mock trust graph + ES256 token issuer (Tier 0: the trust-gated flow, runnable cold) |
 | `src/redact.ts` | `projectByTrust` (`./redact`) — trust-level response projection with fall-DOWN-only semantics; capability-side half of Pattern 6b. Also CANONICAL `SENSITIVE_GOVERNANCE` boundary ({client, personal-sensitive} → full-only) + `governanceVisibleAt`/`filterSensitive` |
+| `src/vault.ts` (gate) | `gateDataRequest` — non-throwing Pattern 6b front door for capability endpoints (header value in, `{ok,payload}\|{ok:false,401,error}` out); pairs with `devVerifyOptions` in dev-server |
 | `src/cli.ts` | `threshold-registry` bin — readable registry digest for humans + agents |
 | `src/prompts/auditor.ts` | `THRESHOLD_AUDITOR_PROMPT` — the integration auditor prompt, served publicly |
 | `src/prompts/index.ts` | Re-exports for the `./prompts` subpath |
@@ -76,11 +77,16 @@ of the trust-gated flow against threshold-dev). Add tests with new logic.
 
 | Consumer | Import path | What it uses |
 |----------|-------------|--------------|
-| threshold-react worker | `@threshold-labs/integration/prompts` | Serves auditor prompt at /api/prompts/audit |
-| threshold-react pages | `@threshold-labs/integration/contract` | Powers /developers, /developers/audit |
-| project-control | (planned) | Will import contract for type-safe signal shape |
+| threshold-react worker | `./prompts` | Serves auditor prompt at /api/prompts/audit |
+| threshold-react pages | `./contract` | Powers /developers, /developers/audit |
+| project-control | `./memory-connector`, `./redact` | Contract re-export; `filterSensitive` + `projectByTrust` at /api/connectors read surfaces |
+| obsidian-connector | `./memory-connector` | Contract re-export (mirror collapsed) |
+| web-activity-connector | `./memory-connector`, `./redact` | Contract re-export; trust-projected `web_read` |
+| threshold-capabilities: overlap | `./vault`, `./redact`, `./dev-server`, `./capability` | The multiplayer keystone — full Tier-0 stack |
+| threshold-capabilities: interest-graph, calendar-graph | `./vault` (`gateDataRequest`), `./redact`, `./dev-server` | Pattern 6b read surfaces |
 
-When adding a new consumer, update this table.
+Local consumers use `"@threshold-labs/integration": "file:../../threshold-complete/threshold-sdk"`
+until the package is npm-published. When adding a new consumer, update this table.
 
 ## Relationship to @threshold-labs/core
 
