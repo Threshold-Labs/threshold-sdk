@@ -2,6 +2,10 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## 0.17.2 — 2026-06-07
+
+Doc-only: **DEVELOPERS.md §5b — the Pattern 6b provider template**, canonicalized from three field adoptions (interest-graph, calendar-graph, reading-history). The three-piece shape (projection module / 3-line gate / cold e2e), the three proven test flavors (rung projection + leak scan, forged credential, the trust gate itself refusing), and the when-NOT-to-gate rule (pure functions, caller-supplied-credential pass-throughs — from threshold-capabilities' hazard sweep).
+
 ## 0.17.1 — 2026-06-07
 
 Doc-only: **the gate-vs-knob boundary**, canonical in `./redact`. `projectByTrust`'s `trustLevel` has two legitimate sources — a verified credential (`gateDataRequest`; required across any trust boundary) or a caller-specified knob (legitimate only where the transport IS the boundary: MCP stdio, loopback). Forward hazard documented: a knob surface whose binding widens must switch to the gate, or `trust=full` becomes an unauthenticated firewall hole. Converged independently by web-activity `1c40253` ⇄ project-control `218ac9f`.

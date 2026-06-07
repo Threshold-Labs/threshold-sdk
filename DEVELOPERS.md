@@ -197,6 +197,75 @@ The credential encodes the trust level. The capability reads it and filters its 
 
 ---
 
+## 5b. Serve a trust-gated capability (Pattern 6b)
+
+The provider side of §5. This template is canonical as of 0.17.2 — proven across three
+capabilities (interest-graph, calendar-graph, reading-history), each shaped the same way.
+Three pieces:
+
+**1. A projection module** — one function, one `projectByTrust` call, every rung a conscious
+decision. Decide ONCE what each trust level reveals, in a file a reviewer can read top to bottom:
+
+```typescript
+// src/projection.ts
+import { projectByTrust } from '@threshold-labs/integration/redact'
+
+export function projectThing(data: Thing[], trustLevel: string) {
+  return projectByTrust(data, trustLevel, {
+    'metadata-only': (all) => ({ count: all.length }),          // required floor
+    redacted: (all) => all.map(anonymize),                       // structure, no identity
+    partial: (all) => all.map(({ sensitive, ...rest }) => rest), // strip the worst field
+    full: (all) => all,                                          // owner only
+  })
+}
+```
+
+Fall-through is DOWNWARD only — an undefined rung degrades to the more restrictive one. Decide
+which field is your most sensitive (page snippets, meeting titles, raw weights) and pick the
+rung where it stops crossing.
+
+**2. The gate at every read endpoint** — three lines:
+
+```typescript
+import { gateDataRequest } from '@threshold-labs/integration/vault'
+
+const gate = await gateDataRequest(req.headers.authorization, { audience: 'your-capability-id' })
+if (!gate.ok) return respond(gate.status, { error: gate.error })
+respond(200, projectThing(data, gate.payload.trustLevel))
+```
+
+For local dev, accept injectable keys and fall back to `TRUST_ISSUER`:
+
+```typescript
+if (!opts.publicJwk && process.env.TRUST_ISSUER) {
+  Object.assign(opts, await devVerifyOptions(process.env.TRUST_ISSUER))
+}
+```
+
+Also: export a `startYourServer(options)` + run-directly guard instead of listening on import,
+so tests can drive the server cold.
+
+**3. A cold e2e test** against `createDevServer()` — no account, no network. The three proven
+test flavors, each catching a different failure surface:
+
+| Flavor | Asserts | First proven in |
+|--------|---------|-----------------|
+| Rung projection | a `partial`/`redacted` caller gets the projected shape AND a leak-scan regex over the raw response finds none of the sensitive terms | interest-graph (partial), calendar-graph (redacted) |
+| Forged/missing credential | bare request → 401, tampered JWT → 401 | all three |
+| The trust gate itself | declare `minimumTrust` ABOVE the dev world's `friend` edge → `requestDataAccess` is refused before your endpoint is ever touched | reading-history |
+
+The leak scan is the highest-value assertion: serialize the whole response and
+`assert.doesNotMatch(raw, /term1|term2|.../)` with terms that exist only in the rungs that
+must not cross.
+
+**When the gate is NOT needed** — pure functions (caller POSTs data, gets a derivation of it
+back: the caller already owns the input) and caller-supplied-credential pass-throughs (caller
+brings their own OAuth token: output goes to the token-bearer). The gate is for surfaces
+serving a RETAINED corpus the owner holds. See the gate-vs-knob doctrine in `./redact` for
+the boundary rule.
+
+---
+
 ## 6. Report heartbeat (if you provide capabilities)
 
 If your app runs infrastructure — indexers, inference endpoints, crawlers — report liveness so consumers know you're up:
