@@ -63,10 +63,13 @@ public endpoint serves the updated prompt.
 ```bash
 npm run build          # compiles src/ → dist/
 npm run dev            # watch mode
+npm test               # node:test over dist/__tests__ (build first; zero test deps)
 ```
 
-The package has no runtime dependencies — it's pure TypeScript types and
-string constants. No test suite needed until logic is added.
+The package has no runtime dependencies. Since v0.10–0.13 it carries real
+logic (registry normalization/rendering, dev-server trust gate, credential
+verification) — covered by `src/__tests__/` (pure logic + a cold end-to-end
+of the trust-gated flow against threshold-dev). Add tests with new logic.
 
 ## Consumer list
 
