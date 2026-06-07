@@ -22,16 +22,23 @@
  * data. So a connector exposes discover/read/embed_set; consumers compose them.
  */
 
-/** Provenance tag — which store an entry/vector came from. Drives source-partitioned embeddings. */
+/** Provenance tag — which store an entry/vector came from. Drives source-partitioned embeddings.
+ *  Vectors carry the entry's OWN source (e.g. 'browser-history'), not its connector's umbrella. */
 export type SourceId =
   | 'obsidian'
   | 'memory-keeper'
   | 'karakeep'
   | 'onetab'
   | 'web-activity'
+  | 'browser-history'
   | string;
 
-/** Governance level for a memory entry. `client` entries never cross-sync into Threshold. */
+/** Governance level for a memory entry. `client` entries never cross-sync into Threshold.
+ *
+ *  TAGLESS-SOURCE CAVEAT (from web-activity's browser-history segment, issue #62):
+ *  a tag-only client firewall leaks client-domain visits when the source carries no
+ *  tags (raw URLs, browser history). Connectors normalizing tagless URL streams MUST
+ *  match client tokens against the DOMAIN as well when deriving governance. */
 export type Governance = 'open' | 'internal' | 'research' | 'client' | 'personal-sensitive';
 
 /** A normalized memory entry as seen through the contract — the lingua franca across stores. */
