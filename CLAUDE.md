@@ -83,7 +83,7 @@ of the trust-gated flow against threshold-dev). Add tests with new logic.
 | obsidian-connector | `./memory-connector` | Contract re-export (mirror collapsed) |
 | web-activity-connector | `./memory-connector`, `./redact` | Contract re-export; trust-projected `web_read` |
 | threshold-capabilities: overlap | `./vault`, `./redact`, `./dev-server`, `./capability` | The multiplayer keystone — full Tier-0 stack |
-| threshold-capabilities: interest-graph, calendar-graph | `./vault` (`gateDataRequest`), `./redact`, `./dev-server` | Pattern 6b read surfaces |
+| threshold-capabilities: interest-graph, calendar-graph, reading-history | `./vault` (`gateDataRequest`), `./redact`, `./dev-server` | Pattern 6b read surfaces |
 
 Local consumers use `"@threshold-labs/integration": "file:../../threshold-complete/threshold-sdk"`
 until the package is npm-published. When adding a new consumer, update this table.
