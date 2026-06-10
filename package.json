@@ -13,51 +13,63 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./contract": {
       "types": "./dist/contract.d.ts",
-      "import": "./dist/contract.js"
+      "import": "./dist/contract.js",
+      "default": "./dist/contract.js"
     },
     "./prompts": {
       "types": "./dist/prompts/index.d.ts",
-      "import": "./dist/prompts/index.js"
+      "import": "./dist/prompts/index.js",
+      "default": "./dist/prompts/index.js"
     },
     "./vault": {
       "types": "./dist/vault.d.ts",
-      "import": "./dist/vault.js"
+      "import": "./dist/vault.js",
+      "default": "./dist/vault.js"
     },
     "./capability": {
       "types": "./dist/capability.d.ts",
-      "import": "./dist/capability.js"
+      "import": "./dist/capability.js",
+      "default": "./dist/capability.js"
     },
     "./client": {
       "types": "./dist/client.d.ts",
-      "import": "./dist/client.js"
+      "import": "./dist/client.js",
+      "default": "./dist/client.js"
     },
     "./auth": {
       "types": "./dist/auth.d.ts",
-      "import": "./dist/auth.js"
+      "import": "./dist/auth.js",
+      "default": "./dist/auth.js"
     },
     "./signals": {
       "types": "./dist/signals.d.ts",
-      "import": "./dist/signals.js"
+      "import": "./dist/signals.js",
+      "default": "./dist/signals.js"
     },
     "./memory-connector": {
       "types": "./dist/memory-connector.d.ts",
-      "import": "./dist/memory-connector.js"
+      "import": "./dist/memory-connector.js",
+      "default": "./dist/memory-connector.js"
     },
     "./redact": {
       "types": "./dist/redact.d.ts",
-      "import": "./dist/redact.js"
+      "import": "./dist/redact.js",
+      "default": "./dist/redact.js"
     },
     "./dev-server": {
       "types": "./dist/dev-server.d.ts",
-      "import": "./dist/dev-server.js"
+      "import": "./dist/dev-server.js",
+      "default": "./dist/dev-server.js"
     },
     "./serve": {
       "types": "./dist/serve.d.ts",
-      "import": "./dist/serve.js"
+      "import": "./dist/serve.js",
+      "default": "./dist/serve.js"
     }
   },
   "scripts": {
