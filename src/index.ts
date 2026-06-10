@@ -44,3 +44,8 @@ export type {
   ReadSignalOptions,
   SignalResponse,
 } from './signals.js'
+export { ThresholdClient } from './client.js'
+export type {
+  ThresholdClientOptions,
+  ThresholdClientErrorContext,
+} from './client.js'

@@ -31,6 +31,10 @@
       "types": "./dist/capability.d.ts",
       "import": "./dist/capability.js"
     },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
     "./auth": {
       "types": "./dist/auth.d.ts",
       "import": "./dist/auth.js"
