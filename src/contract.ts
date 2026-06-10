@@ -5,6 +5,9 @@
  * Import this in docs, the /developers page, and any tooling that validates
  * integration payloads.
  *
+ * v0.10.0: Explicit `status` ('live' | 'coming-soon') on every declared
+ * endpoint entry, verified against the platform worker implementation.
+ *
  * v0.9.0: Signal helpers (pushSignal, readSignal), heartbeat/availability,
  * app token auth for capability CRUD.
  *
@@ -341,7 +344,7 @@ export interface DataCredentialPayload {
 // ── Capability Contract ──────────────────────────────────────────────────────
 
 export const CAPABILITY_CONTRACT = {
-  version: '0.9.0',
+  version: '0.10.0',
   baseUrl: 'https://thresholdlabs.io',
 
   auth: {
@@ -427,6 +430,7 @@ export const CAPABILITY_CONTRACT = {
   login: {
     authorize: {
       page: '/auth/authorize',
+      status: 'live' as const,
       description: 'Consent page for Login with Threshold. App redirects the user here. After user approves, redirects back to redirect_uri with an authorization code.',
       queryParams: {
         app_id: 'string — registered app ID',
@@ -438,6 +442,7 @@ export const CAPABILITY_CONTRACT = {
     },
     appInfo: {
       endpoint: '/api/auth/app-info',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: 'none' as const,
       description: 'Public lookup for consent page. Returns app name and whether redirect_uri is allowed.',
@@ -455,6 +460,7 @@ export const CAPABILITY_CONTRACT = {
     },
     code: {
       endpoint: '/api/auth/code',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'clerkJwt' as const,
       description: 'Issue an authorization code after user approves on the consent page.',
@@ -470,6 +476,7 @@ export const CAPABILITY_CONTRACT = {
     },
     token: {
       endpoint: '/auth/token',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'appToken' as const,
       description: 'Exchange an authorization code for a Threshold user token.',
@@ -486,6 +493,7 @@ export const CAPABILITY_CONTRACT = {
     },
     userinfo: {
       endpoint: '/auth/userinfo',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: 'userToken' as const,
       description: 'Get user profile. Scoped to what the app is allowed to see.',
@@ -498,6 +506,7 @@ export const CAPABILITY_CONTRACT = {
     },
     logout: {
       endpoint: '/auth/logout',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'userToken' as const,
       description: 'Revoke user token. App should clear localStorage.',
@@ -525,6 +534,7 @@ export const CAPABILITY_CONTRACT = {
   capabilities: {
     create: {
       endpoint: '/api/capabilities',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Declare a capability owned by the authenticated user. For connector types (e.g. Spotify), this is called after the OAuth flow completes.',
@@ -542,6 +552,7 @@ export const CAPABILITY_CONTRACT = {
     },
     list: {
       endpoint: '/api/capabilities',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'List all capabilities owned by the authenticated user.',
@@ -549,6 +560,7 @@ export const CAPABILITY_CONTRACT = {
     },
     get: {
       endpoint: '/api/capabilities/:id',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Get details for a specific capability.',
@@ -556,6 +568,7 @@ export const CAPABILITY_CONTRACT = {
     },
     update: {
       endpoint: '/api/capabilities/:id',
+      status: 'live' as const,
       method: 'PATCH' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Update a capability. Only the owner can update.',
@@ -563,6 +576,7 @@ export const CAPABILITY_CONTRACT = {
     },
     revoke: {
       endpoint: '/api/capabilities/:id',
+      status: 'live' as const,
       method: 'DELETE' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Revoke a capability. Sets status to "revoked". All active grants are invalidated.',
@@ -573,6 +587,7 @@ export const CAPABILITY_CONTRACT = {
   capabilityGrants: {
     create: {
       endpoint: '/api/capabilities/:id/grants',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Grant access to a capability. The authenticated user must own the capability.',
@@ -586,6 +601,7 @@ export const CAPABILITY_CONTRACT = {
     },
     list: {
       endpoint: '/api/capabilities/:id/grants',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'List active grants on a capability. Owner only.',
@@ -593,6 +609,7 @@ export const CAPABILITY_CONTRACT = {
     },
     revoke: {
       endpoint: '/api/capabilities/:id/grants/:grantId',
+      status: 'live' as const,
       method: 'DELETE' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Revoke a specific grant.',
@@ -603,6 +620,7 @@ export const CAPABILITY_CONTRACT = {
   compositions: {
     list: {
       endpoint: '/api/apps/:slug/capabilities',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'List capabilities an app composes (requires). Public metadata only.',
@@ -610,6 +628,7 @@ export const CAPABILITY_CONTRACT = {
     },
     add: {
       endpoint: '/api/apps/:slug/capabilities',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Add a capability requirement to an app. App owner only.',
@@ -621,6 +640,7 @@ export const CAPABILITY_CONTRACT = {
     },
     remove: {
       endpoint: '/api/apps/:slug/capabilities/:capId',
+      status: 'live' as const,
       method: 'DELETE' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Remove a capability from an app composition.',
@@ -631,6 +651,7 @@ export const CAPABILITY_CONTRACT = {
   capabilityResolution: {
     resolve: {
       endpoint: '/api/capabilities/:id/resolve',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['grantToken', 'appToken', 'clerkJwt'] as const,
       description: 'Runtime discovery of a capability endpoint. Returns endpoint URL, trust level, operational status, and full declaration. Grant token holders get the trust level from their grant. App token holders (via composition) get the capability\'s declared trust level. Clerk JWT holders (owner) get full trust.',
@@ -650,6 +671,7 @@ export const CAPABILITY_CONTRACT = {
   capabilityHeartbeat: {
     heartbeat: {
       endpoint: '/api/capabilities/:id/heartbeat',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Report capability liveness. Call on a declared interval. Threshold derives availability from heartbeat recency. Provider must own the capability.',
@@ -670,6 +692,7 @@ export const CAPABILITY_CONTRACT = {
   capabilityDataAccess: {
     requestAccess: {
       endpoint: '/api/capabilities/:id/data',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['grantToken', 'appToken'] as const,
       description: 'Request a trust-scoped data access credential for direct capability-to-capability communication. Returns the capability endpoint + a signed credential (thld_va_ JWT). The caller presents this credential directly to the capability endpoint. Threshold stays out of the data path. The credential includes trust_level, so the capability can filter its response accordingly.',
@@ -688,6 +711,7 @@ export const CAPABILITY_CONTRACT = {
   custody: {
     declare: {
       endpoint: '/api/custody',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'appToken' as const,
       description: 'Declare custody of data about an identified-but-unclaimed entity. The app asserts it holds data and specifies what happens when the entity claims their identity. Returns a custody record ID.',
@@ -705,6 +729,7 @@ export const CAPABILITY_CONTRACT = {
     },
     list: {
       endpoint: '/api/custody',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'List custody records. App token: returns records where the app is custodian. Clerk JWT: returns records claimable by or claimed by the user.',
@@ -716,6 +741,7 @@ export const CAPABILITY_CONTRACT = {
     },
     claim: {
       endpoint: '/api/custody/claim',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'clerkJwt' as const,
       description: 'Claim custodied data by proving identity ownership. Threshold matches the identity against custody records. If transferOnClaim is true in the custody terms, data migration begins automatically. The app\'s access downgrades from "holder" to "consumer" per the declared terms.',
@@ -733,6 +759,7 @@ export const CAPABILITY_CONTRACT = {
     },
     transfer: {
       endpoint: '/api/custody/:id/transfer',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'clerkJwt' as const,
       description: 'Initiate or complete data transfer from app custody to user vault. Called after claim. The app receives a callback (if registered) to export the data. Once complete, the custody record moves to "sovereign" phase.',
@@ -768,6 +795,7 @@ export const CAPABILITY_CONTRACT = {
      */
     signalPush: {
       endpoint: '/api/signals/:source',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'appToken' as const,
       description:
@@ -826,6 +854,7 @@ export const CAPABILITY_CONTRACT = {
      */
     signalRead: {
       endpoint: '/api/signals/:source',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Read the latest signal for the authenticated user. App token returns the signal for the token owner. Clerk JWT returns the signal for the logged-in user. Cross-user reads (trust graph) coming in the next iteration.',
@@ -864,6 +893,7 @@ export const CAPABILITY_CONTRACT = {
      */
     graphSignature: {
       endpoint: '/api/apps/:slug/signature',
+      status: 'live' as const,
       methods: ['GET', 'POST'] as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description:
@@ -886,6 +916,7 @@ export const CAPABILITY_CONTRACT = {
       },
       history: {
         endpoint: '/api/apps/:slug/signature/history',
+        status: 'live' as const,
         queryParams: {
           viewName: 'string — which view to retrieve (default: "main")',
           limit: 'number — max snapshots to return (default: 50, max: 200)',
@@ -913,6 +944,7 @@ export const CAPABILITY_CONTRACT = {
   vault: {
     register: {
       endpoint: '/api/apps/:slug/vault',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'clerkJwt' as const,
       body: {
@@ -923,6 +955,7 @@ export const CAPABILITY_CONTRACT = {
     capabilities: {
       read: {
         endpoint: '/api/apps/:slug/vault/capabilities',
+        status: 'live' as const,
         method: 'GET' as const,
         auth: 'none' as const,
         description: 'Public — no auth required. Returns the vault endpoint and full capability declarations.',
@@ -934,6 +967,7 @@ export const CAPABILITY_CONTRACT = {
       },
       update: {
         endpoint: '/api/apps/:slug/vault/capabilities',
+        status: 'live' as const,
         method: 'PUT' as const,
         auth: ['appToken', 'clerkJwt'] as const,
         description: 'Update capability declarations without changing the vault endpoint. Designed for daemon processes that push updated adherence scores on startup. Requires vault to be registered first via POST /api/apps/:slug/vault.',
@@ -945,6 +979,7 @@ export const CAPABILITY_CONTRACT = {
     },
     credential: {
       endpoint: '/api/apps/:slug/vault/credential',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: 'appToken' as const,
       description: 'Request a signed vault credential. Requires an app_data_grant for the requested scope on the target vault.',
@@ -961,6 +996,7 @@ export const CAPABILITY_CONTRACT = {
     },
     jwks: {
       endpoint: '/.well-known/jwks.json',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: 'none' as const,
       description: 'Public key for vault credential verification. ECDSA P-256, kid: vault-signing-1. Cache this; it rotates infrequently.',
@@ -980,6 +1016,7 @@ export const CAPABILITY_CONTRACT = {
   derivations: {
     spotifyTaste: {
       endpoint: '/api/integrations/derive/spotify-taste',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'clerkJwt'] as const,
       description: 'Derives SpotifyTasteSignal from the user\'s connected Spotify account (top artists, top tracks, audio features) and pushes it as a "spotify-taste" signal. Returns the derived signal immediately. Requires Spotify capability at /capabilities.',
@@ -1032,6 +1069,7 @@ export const CAPABILITY_CONTRACT = {
     scope: {
       create: {
         endpoint: '/api/scopes',
+        status: 'live' as const,
         method: 'POST' as const,
         auth: 'clerkJwt' as const,
         body: {
@@ -1044,17 +1082,20 @@ export const CAPABILITY_CONTRACT = {
       members: {
         add: {
           endpoint: '/api/scopes/:scopeId/members',
+          status: 'live' as const,
           method: 'POST' as const,
           auth: 'clerkJwt' as const,
           body: { userId: 'string' },
         },
         remove: {
           endpoint: '/api/scopes/:scopeId/members/:userId',
+          status: 'live' as const,
           method: 'DELETE' as const,
           auth: 'clerkJwt' as const,
         },
         list: {
           endpoint: '/api/scopes/:scopeId/members',
+          status: 'live' as const,
           method: 'GET' as const,
           auth: 'clerkJwt' as const,
           response: { members: 'Array<{ userId, joinedAt }>' },
@@ -1064,12 +1105,14 @@ export const CAPABILITY_CONTRACT = {
     signals: {
       push: {
         endpoint: '/api/signals/:source?scope=:scopeId',
+        status: 'live' as const,
         method: 'POST' as const,
         auth: 'appToken' as const,
         note: 'When ?scope= is present, writes to scope_signals (scope_id, source) instead of user_signals. Token owner must be a scope member.',
       },
       read: {
         endpoint: '/api/signals/:source?scope=:scopeId',
+        status: 'live' as const,
         method: 'GET' as const,
         auth: 'appToken' as const,
         note: 'Token owner must be a scope member. Returns { source, signal, pushedAt }.',
@@ -1079,6 +1122,7 @@ export const CAPABILITY_CONTRACT = {
       note: 'Two grant types share the same endpoint. user grants: User A shares sources with User B. scope grants: any scope member can read listed sources from the scope signal store. Use GrantDeclaration type from this package.',
       create: {
         endpoint: '/api/grants',
+        status: 'live' as const,
         method: 'POST' as const,
         auth: 'clerkJwt' as const,
         body: 'GrantDeclaration',
@@ -1086,6 +1130,7 @@ export const CAPABILITY_CONTRACT = {
       },
       list: {
         endpoint: '/api/grants',
+        status: 'live' as const,
         method: 'GET' as const,
         auth: 'clerkJwt' as const,
         response: 'Array<{ grantId, type, grantee, sources, trustLevel, createdAt }>',
@@ -1093,6 +1138,7 @@ export const CAPABILITY_CONTRACT = {
       },
       revoke: {
         endpoint: '/api/grants/:grantId',
+        status: 'live' as const,
         method: 'DELETE' as const,
         auth: 'clerkJwt' as const,
       },
@@ -1109,6 +1155,7 @@ export const CAPABILITY_CONTRACT = {
   claims: {
     create: {
       endpoint: '/api/claims',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'userToken'] as const,
       description: 'Create an attribution claim.',
@@ -1128,6 +1175,7 @@ export const CAPABILITY_CONTRACT = {
     },
     list: {
       endpoint: '/api/claims',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'userToken', 'clerkJwt'] as const,
       description: 'List attribution claims. Filterable by subject and app.',
@@ -1148,6 +1196,7 @@ export const CAPABILITY_CONTRACT = {
   corrections: {
     create: {
       endpoint: '/api/corrections',
+      status: 'live' as const,
       method: 'POST' as const,
       auth: ['appToken', 'userToken', 'clerkJwt'] as const,
       description: 'Create a correction for a prior signal, claim, or capability.',
@@ -1167,6 +1216,7 @@ export const CAPABILITY_CONTRACT = {
     },
     list: {
       endpoint: '/api/corrections',
+      status: 'live' as const,
       method: 'GET' as const,
       auth: ['appToken', 'userToken', 'clerkJwt'] as const,
       description: 'List corrections for a target record.',
