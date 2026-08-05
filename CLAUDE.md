@@ -17,6 +17,7 @@ this package to integrate with the Threshold trust graph.
 | `src/redact.ts` | `projectByTrust` (`./redact`) — trust-level response projection with fall-DOWN-only semantics; capability-side half of Pattern 6b. Also CANONICAL `SENSITIVE_GOVERNANCE` boundary ({client, personal-sensitive} → full-only) + `governanceVisibleAt`/`filterSensitive` |
 | `src/vault.ts` (gate) | `gateDataRequest` — non-throwing Pattern 6b front door for capability endpoints (header value in, `{ok,payload}\|{ok:false,401,error}` out); pairs with `devVerifyOptions` in dev-server |
 | `src/serve.ts` | `serveVault` (`./serve`) — one-call trust-gated capability server (gate + projection + node:http); the serving half of the vault exchange, absorbed from 3 hand-rolled capability servers. Node-only |
+| `src/pool.ts` | Pool primitives (`./pool`) — trust-anchored membership (`derivePoolMembership`: anchor-rooted edges ≥ minimumTrust, no member table), `gatePoolRequest` (401 credential → 403 membership; revocation graph-native, re-derived per request), consent opt-out (`isOptedOut`/`filterOptedOut`, err-closed on unattributable content), `MINIMUM_TRUST_ORDER` ladder. Metering/settlement is design-only: `docs/pool-metering-contract.md` |
 | `src/cli.ts` | `threshold-registry` bin — readable registry digest for humans + agents |
 | `src/prompts/auditor.ts` | `THRESHOLD_AUDITOR_PROMPT` — the integration auditor prompt, served publicly |
 | `src/prompts/index.ts` | Re-exports for the `./prompts` subpath |

@@ -44,6 +44,24 @@ export type {
   ReadSignalOptions,
   SignalResponse,
 } from './signals.js'
+export {
+  MINIMUM_TRUST_ORDER,
+  trustAtLeast,
+  derivePoolMembership,
+  poolCapabilityDeclaration,
+  isOptedOut,
+  filterOptedOut,
+  gatePoolRequest,
+} from './pool.js'
+export type {
+  TrustEdge,
+  PoolDeclaration,
+  PoolMember,
+  ConsentScope,
+  OptOutRecord,
+  FilterOptedOutOptions,
+  PoolGateResult,
+} from './pool.js'
 export { ThresholdClient } from './client.js'
 export type {
   ThresholdClientOptions,
