@@ -41,7 +41,11 @@ export interface VaultCredentialPayload {
   grantee: string
   /** The vault app slug this credential is scoped to (should match your app) */
   audience: string
-  /** The capability scope granted, e.g. 'edges:read:current' */
+  /**
+   * The capability scope granted, e.g. 'edges:read:current'.
+   * Convention (#63): `<surface>:<verb>[:<qualifier>]` — kebab-case surface,
+   * verb ∈ read | write | derive, optional qualifier. Check with scopeSatisfies().
+   */
   scope: string
   /** The app_data_grants row that authorized this credential */
   grantId: string
@@ -267,6 +271,25 @@ export async function verifyDataCredential(
     ownerId: payload.owner_id,
     expiresAt: new Date(payload.exp * 1000),
   }
+}
+
+/**
+ * Does a granted scope satisfy a required one? Prefix semantics per the
+ * `<surface>:<verb>[:<qualifier>]` convention (#63): a credential bearing
+ * `reading:read` satisfies an endpoint requiring `reading:read` or
+ * `reading:read:current`, but not `reading:write` and not `readings:read`.
+ * A narrower grant (`edges:read:current`) never satisfies the broader
+ * requirement (`edges:read`). Pass an array to check any-of.
+ *
+ * Absorbed once two vaults hand-rolled the same exact-or-startsWith check.
+ */
+export function scopeSatisfies(granted: string | readonly string[], required: string): boolean {
+  if (Array.isArray(granted)) return granted.some((g) => scopeSatisfies(g, required))
+  const g = String(granted).trim()
+  const r = required.trim()
+  if (!g || !r) return false
+  if (g === r) return true
+  return r.startsWith(g + ':')
 }
 
 /** Result of gating an incoming request on a data credential — never throws. */
