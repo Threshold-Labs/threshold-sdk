@@ -92,6 +92,20 @@ export interface CapabilityDeclaration {
   }>
 }
 
+// ── Capability Invoke Envelope ───────────────────────────────────────────────
+
+/**
+ * Wire envelope returned by a capability's invoke endpoint
+ * (`POST /invoke {capability, args}` or `GET /invoke/<id>`).
+ *
+ * `result` is the capability's text output; `capability` echoes the id that
+ * ran; `ms` is server-side wall time. Absorbed after two consumers
+ * (a hosted dispatcher and its local mirror) encoded the same shape.
+ */
+export type CapabilityInvokeResult<T = string> =
+  | { ok: true; result: T; capability: string; ms: number }
+  | { ok: false; error: string; capability: string; ms: number }
+
 // ── Custody Types (#61) ─────────────────────────────────────────────────────
 
 /**

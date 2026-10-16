@@ -2,6 +2,14 @@
 
 Versioning: **patch** = doc-only · **minor** = new pattern / new known source / new scope · **major** = breaking change to an existing endpoint or auth model. `INTEGRATION_CONTRACT.version` + `AUDITOR_VERSION` bump together only when the HTTP interface itself changes.
 
+## Unreleased
+
+**`./vault`: `scopeSatisfies(granted, required)`** — the prefix check for the `<surface>:<verb>[:<qualifier>]` scope convention (#63): `reading:read` satisfies `reading:read:current`, never `reading:write`, never `readings:read`; a narrower grant never satisfies a broader requirement. Absorbed once a second consumer hand-rolled the exact-or-startsWith check. Also exported from the root.
+
+**`./contract`: `CapabilityInvokeResult<T>`** — the `{ok, result | error, capability, ms}` wire envelope an invoke endpoint returns, typed once now that two consumers encode it. Type only; no HTTP interface change, `INTEGRATION_CONTRACT.version` unchanged.
+
+Backfill note: 0.19.0 / 0.20.0 (client, `default` export condition, contract 0.10.0 status flags, pool) remain unlogged here; see git history.
+
 ## 0.18.0 — 2026-06-07
 
 **`./serve`: `serveVault`** — the one-call trust-gated capability server, completing the last Tier 0 roadmap bullet (the serving half of the vault exchange; the verification half shipped in v0.13/v0.17). `serveVault({audience, getData, projections, port?, publicJwk?, issuer?})` → gated `GET /data` (projected by credential trust level, `?params` → subgraph) + open `GET /health`. Absorbed from the skeleton three capabilities hand-rolled (interest-graph, calendar-graph, reading-history). Node-only subpath; Workers surfaces keep composing `gateDataRequest` + `projectByTrust` directly. The floor, not the ceiling — multi-route capabilities graduate to the §5b template.

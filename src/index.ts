@@ -9,6 +9,7 @@ export type {
   CapabilityStatus,
   CapabilityPattern,
   CapabilityTokenScope,
+  CapabilityInvokeResult,
   KnownSignalSource,
   ScopeDeclaration,
   GrantDeclaration,
@@ -62,6 +63,7 @@ export type {
   FilterOptedOutOptions,
   PoolGateResult,
 } from './pool.js'
+export { scopeSatisfies } from './vault.js'
 export { ThresholdClient } from './client.js'
 export type {
   ThresholdClientOptions,
