@@ -216,8 +216,13 @@ export async function createDevServer(options: DevServerOptions = {}): Promise<D
         (c) => c.owner_id === user.id && c.capability_id === declaration.id
       )
       if (existing) {
-        existing.declaration = JSON.stringify(declaration)
-        existing.updated_at = now
+        existing.name         = declaration.name ?? existing.name
+        existing.type         = declaration.type ?? existing.type
+        existing.trust_level  = declaration.trustLevel ?? existing.trust_level
+        existing.minimum_trust = declaration.minimumTrust ?? existing.minimum_trust
+        existing.endpoint     = declaration.endpoint !== undefined ? (declaration.endpoint ?? null) : existing.endpoint
+        existing.declaration  = JSON.stringify(declaration)
+        existing.updated_at   = now
         json(res, 200, { id: existing.id, capabilityId: existing.capability_id, createdAt: existing.created_at })
         return
       }
