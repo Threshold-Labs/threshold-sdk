@@ -28,6 +28,8 @@ export type {
   // RFC types (typed, not yet implemented)
   AttributionClaim,
   Correction,
+  DeformationSignal,
+  ComposedTrustProfile,
   // Deprecated aliases
   IntegrationPattern,
   IntegrationTokenScope,
