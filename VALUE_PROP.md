@@ -25,11 +25,11 @@ AGENT     registry = cross-session memory;        declarative trust policy — a
 ## Single-player, human — the adoption door (true *today*, cheap to ship)
 
 1. **Don't build it twice.** A builder with many apps reuses capabilities across their *own*
-   portfolio — no trust graph required. Fred's portfolio-eval is the proof: `local-inference`
+   portfolio — no trust graph required. an early builder's portfolio-eval is the proof: `local-inference`
    powers all 8 of his POCs, `interest-graph` 5, `overlap` ~4. Register once, compose N times.
    The "floor rises" is true at **n=1 user / n=many apps.**
 2. **Overflow containment.** A contract is a boundary: "this does ONE thing, here's its I/O."
-   Registering forces the discipline that stops the app-vs-capability collapse (the welding Fred
+   Registering forces the discipline that stops the app-vs-capability collapse (the welding an early builder
    kept doing — `FocusStore` welded into the app, signal logic living in `FocusSessionBar.tsx`).
    Even solo, the contract keeps logic from sprawling into the app.
 3. **The recognition moment.** "Your app is already 5–6 of these types" — decomposition as
@@ -42,7 +42,7 @@ AGENT     registry = cross-session memory;        declarative trust policy — a
 
 ## Single-player, agent — the under-articulated one
 
-Fred builds *with* Claude Code instances. Threshold's value to the **agent** is distinct from its
+Early builders build *with* Claude Code instances. Threshold's value to the **agent** is distinct from its
 value to the human, and it's the part the pitch most under-sells:
 
 1. **The registry is the agent's cross-session memory.** An agent re-derives solutions every
@@ -51,7 +51,7 @@ value to the human, and it's the part the pitch most under-sells:
    rebuilding. **Don't-build-it-twice at the *agent* level.**
 2. **The contract is a typed interface the agent reads without reading the impl.** `capability.json`
    tells the agent the I/O shape, trust level, cadence — so it integrates against a contract, not by
-   reverse-engineering code. Fewer hallucinated integrations (Fred's audit: he *invented* I/O types
+   reverse-engineering code. Fewer hallucinated integrations (an early builder's audit: he *invented* I/O types
    at `task-breakdown/index.ts:58` because the contract had none — fix that and the agent stops
    guessing).
 3. **A capability is a context boundary.** The agent works *one* capability with a clear contract
@@ -79,7 +79,7 @@ policy. The hard part (what each `trustLevel` reveals) is not the agent's proble
 ## The adoption logic (how to sequence the pitch)
 
 - **Single-player gets you in the door** — reuse + containment + agent-memory. True today, needs
-  only a discoverable registry. **This is the pitch to Fred and his agents right now.**
+  only a discoverable registry. **This is the pitch to early builders and their agents right now.**
 - **Multiplayer is why you stay** — the trust-gated moat. Needs Tier 0. This is the pitch once the
   builder has two people's data to connect.
 
