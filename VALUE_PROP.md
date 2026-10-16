@@ -38,7 +38,7 @@ AGENT     registry = cross-session memory;        declarative trust policy — a
 
 > **What this needs to ship:** only a **discoverable registry** — a readable index of declared
 > contracts (`threshold registry`). NOT the full typed `invoke`. This is the cheap adoption hook
-> that should ride alongside Tier 0. See `FRED_ROADMAP.md` §1.
+> that should ride alongside Tier 0. (roadmap tracked privately).
 
 ## Single-player, agent — the under-articulated one
 
