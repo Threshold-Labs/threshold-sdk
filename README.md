@@ -207,7 +207,6 @@ Zero runtime dependencies — pure TypeScript types and functions.
 ## Links
 
 - [Vision](./VISION.md) — full architectural thesis
-- [Positioning](./POSITIONING.md) — how Threshold relates to IPFS, Solid, Runpod
 - [Developer guide](./DEVELOPERS.md)
 - [Public endpoint](https://thresholdlabs.io/api/prompts/audit) — auditor prompt
 - [GitHub Issues](https://github.com/Threshold-Labs/threshold-sdk/issues) — interface proposals

@@ -1,8 +1,8 @@
-# Pool metering & settlement contract — design (v0, 2026-08-05)
+# Pool metering & settlement contract — design (v0)
 
-**Status: DESIGN ONLY.** No billing code ships before Gate 1 (first 3–5 member cohort
-splits a real bill with zero disputes). This document is the contract sketch the
-first pool's Gate-0 data will validate or break.
+> Thresholds and settlement policy are documented privately. This file covers only the shape of the contract.
+
+**Status: DESIGN ONLY.** No metering or billing code ships in this SDK. This document sketches the three data shapes the contract defines.
 
 ## Position in the stack
 
@@ -33,7 +33,7 @@ interface PoolOutcomeRow {
   decisionId: string      // unique per request — the dedupe/audit key
   poolId: string          // which pool's shared resource served it
   member: string          // credential grantee (thld_va_ sub) — NOT a display name
-  capabilityId: string    // e.g. 'group-brain'
+  capabilityId: string    // the capability the request invoked
   at: string              // ISO timestamp
   tokens?: number         // input+output, when the resource is model inference
   wallclockMs: number
@@ -80,7 +80,7 @@ interface SettlementView {
     member: string
     basis: 'wallclock' | 'tokens'  // one basis per pool per window, declared up front
     fraction: number               // member usage / total metered usage
-    amount: number                 // fraction × (bill.total − residual policy amount)
+    amount: number                 // member's apportioned amount of the bill
   }>
   residualPolicy: 'anchor-absorbs' | 'split-evenly' | 'carry-forward'
 }
@@ -88,27 +88,12 @@ interface SettlementView {
 
 Soft means: this view is **advisory and inspectable** — every member can see the
 bill, the basis, their rows, and everyone's fractions. Money moves outside the
-system (or not at all) until Gate 1 proves the view survives contact with a real
-bill and real people.
+system.
 
-Design decisions to validate at Gate 0:
-- **Basis**: wallclock is the honest default for a shared container (it is what the
-  pool actually rents); tokens only when the container serves exactly one model.
-- **Residual**: idle time is real cost with no user. Default `anchor-absorbs` for
-  the first pool (the anchor is the operator); revisit when residual > ~30% of bill.
-- **Reconciliation tolerance**: metered wallclock vs vendor-billed hours must agree
-  within a few % (Gate-0 exit criterion). Persistent gaps mean the meter is wrong —
-  fix the meter, don't apportion phantom cost.
+Basis, residual policy and reconciliation tolerance are policy choices; they are documented privately.
 
 ## Consent interaction
 
 Opting out (`OptOutRecord`) excludes a member's *content* from index/artifact; it
 does not erase their *usage* — rows they generated remain in the ledger (they
 consumed shared compute). The two axes never share a code path.
-
-## What would falsify this design
-
-- Gate-0: metering can't reconcile with the vendor bill within tolerance → the
-  outcome-row projection is missing a cost dimension (cold starts? storage?).
-- Gate-1: a dispute that the ledger can't adjudicate from rows alone → the row
-  needs more provenance (which model, which batch job), not more policy.

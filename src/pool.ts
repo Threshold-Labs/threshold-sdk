@@ -80,7 +80,7 @@ export interface PoolDeclaration {
   anchorId: string
   /** Minimum anchor→member trust tier for membership */
   minimumTrust: MinimumTrust
-  /** Capability ids this pool serves (declared by the anchor), e.g. ['group-brain'] */
+  /** Capability ids this pool serves (declared by the anchor), e.g. ['shared-index'] */
   capabilities: string[]
 }
 
